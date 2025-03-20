@@ -1,0 +1,2 @@
+/Users/macbookpro/Desktop/webProjects/KApp/k_app/android/app/.cxx/Debug/2j48yp18/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/macbookpro/Desktop/webProjects/KApp/k_app/android/app/.cxx/Debug/2j48yp18/armeabi-v7a/CMakeFiles/rebuild_cache.dir

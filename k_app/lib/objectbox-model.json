@@ -1,0 +1,108 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "2:6634481810941359847",
+      "lastPropertyId": "5:6849102573847759673",
+      "name": "Appointment",
+      "properties": [
+        {
+          "id": "1:5726202758214459293",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2000552649557671010",
+          "name": "userName",
+          "type": 9
+        },
+        {
+          "id": "3:4012893619847040575",
+          "name": "appointmentDate",
+          "type": 10
+        },
+        {
+          "id": "4:6821228442662167584",
+          "name": "appointmentTime",
+          "type": 9
+        },
+        {
+          "id": "5:6849102573847759673",
+          "name": "establishmentName",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:990186337278359424",
+      "lastPropertyId": "8:8690417943527209120",
+      "name": "Billing",
+      "properties": [
+        {
+          "id": "1:7084866977902847766",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:869696993676531503",
+          "name": "appointmentID",
+          "type": 6
+        },
+        {
+          "id": "3:2316565752688774070",
+          "name": "customerName",
+          "type": 9
+        },
+        {
+          "id": "4:8308414128463215470",
+          "name": "appointmentDate",
+          "type": 10
+        },
+        {
+          "id": "5:7687552758909987282",
+          "name": "amount",
+          "type": 8
+        },
+        {
+          "id": "6:5739871711855465694",
+          "name": "date",
+          "type": 10
+        },
+        {
+          "id": "7:9015785600562538945",
+          "name": "appointmentTime",
+          "type": 9
+        },
+        {
+          "id": "8:8690417943527209120",
+          "name": "establismentName",
+          "type": 9
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "3:990186337278359424",
+  "lastIndexId": "0:0",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [
+    1184930772567261702
+  ],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [
+    7751117619348870521,
+    4220806842815052471,
+    7264904363626246197,
+    8164218505522319731
+  ],
+  "retiredRelationUids": [],
+  "version": 1
+}

@@ -1,0 +1,2 @@
+/Users/macbookpro/Desktop/webProjects/KApp/k_app/android/app/.cxx/Debug/59913136/x86/CMakeFiles/edit_cache.dir
+/Users/macbookpro/Desktop/webProjects/KApp/k_app/android/app/.cxx/Debug/59913136/x86/CMakeFiles/rebuild_cache.dir

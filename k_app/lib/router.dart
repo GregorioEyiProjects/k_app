@@ -4,6 +4,7 @@ import 'package:k_app/client/screens/billing/seeAllBilling.dart';
 import 'package:k_app/client/screens/edit/edit_appointment.dart';
 import 'package:k_app/client/screens/home/home.dart';
 import 'package:k_app/client/screens/home/homeScreen.dart';
+import 'package:k_app/client/screens/home/index_page.dart';
 import 'package:k_app/client/screens/login/Login.dart';
 import 'package:k_app/client/screens/register/Register.dart';
 import 'package:k_app/client/screens/welcome.dart';
@@ -24,6 +25,8 @@ Map<String, WidgetBuilder> routes = {
 // -------- Router dynamic--------
 Route<dynamic> generateRoute(RouteSettings settings) {
   switch (settings.name) {
+    case '/':
+      return MaterialPageRoute(builder: (context) => const IndexPage());
     case '/welcome':
       return MaterialPageRoute(builder: (context) => const Welcome());
     case '/login':

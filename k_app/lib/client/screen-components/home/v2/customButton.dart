@@ -22,8 +22,8 @@ class CustomButton2 extends StatelessWidget {
     this.color = Colors.blue,
     this.textColor = AppColors.whiteColor,
     this.backgroungColor = AppColors.backgroundColor,
-    this.width = 50,
-    this.height = 50,
+    this.width = 40,
+    this.height = 40,
     this.fontSize = 20,
   });
 

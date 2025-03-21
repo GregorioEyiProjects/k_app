@@ -38,7 +38,7 @@ class _CustomEventlistState extends State<CustomEventlist> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 254, // I need to come up with something better that this
+      height: 300, // I need to come up with something better that this
       color: AppColors.backgroundColor,
       child: ListView.builder(
         padding: EdgeInsets.zero,
@@ -183,7 +183,7 @@ class _CustomEventlistState extends State<CustomEventlist> {
                 textIcon: "🗑️",
                 width: 5,
                 height: 5,
-                fontSize: 18,
+                fontSize: 14,
                 backgroungColor: AppColors.textColor.withOpacity(0.8),
                 onPressed: () {
                   //Delete the appointment
@@ -196,9 +196,9 @@ class _CustomEventlistState extends State<CustomEventlist> {
               CustomButton2(
                 //btnTitle: "Done",
                 textIcon: "💵",
-                fontSize: 25,
-                width: 10,
-                height: 10,
+                fontSize: 18,
+                width: 5,
+                height: 5,
                 backgroungColor: AppColors.greenAccent.withOpacity(0.7),
                 onPressed: () {
                   //Show payment dialog

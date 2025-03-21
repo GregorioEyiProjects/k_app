@@ -154,7 +154,7 @@ class _BillingScreenState extends State<BillingScreen> {
         },
         child: Text('Billing Screen'),
       ),
-      bottomNavigationBar: CustomBottomNav(page: 1),
+      //bottomNavigationBar: CustomBottomNav(page: 1),
     );
   }
 

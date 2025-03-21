@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:k_app/app_colors.dart';
 import 'package:k_app/client/screen-components/home/v2/customBottomNav.dart';
+import 'package:k_app/client/screen-components/home/v2/customBottomNav2.dart';
 import 'package:k_app/global.dart';
 import 'package:k_app/client/screen-components/home/v2/customCalendar.dart';
 import 'package:k_app/client/screen-components/home/v2/customEventList.dart';
@@ -32,9 +33,6 @@ class _HomescreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Provider.of<AppProvider>(context, listen: false).fetchEvents();
     });
-    //get the data
-    //listOfEvents = Provider.of<AppProvider>(context, listen: false).listOfEvents
-    //print("Here is the list coming from the provider ${listOfEvents.toString()}");
   }
 
   void filterAppointmentsByEstablishmentName(List<Appointment> listOfEvents) {
@@ -69,14 +67,14 @@ class _HomescreenState extends State<HomeScreen> {
           } else {
             filterAppointmentsByEstablishmentName(listOfEvents!);
           }
-          //listOfEventsToUse ??= listOfEvents?.reversed.toList() ?? [];
+          //listOfEventsToUse ??= listOfEvents?.reversed.toList() ?? []; // EdgeInsets.only(left: marginleft, right: marginRigth)
 
-          return SingleChildScrollView(
+          return Padding(
             padding: EdgeInsets.only(left: marginleft, right: marginRigth),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 20),
+                // /SizedBox(height: 20),
                 // Calendar
                 CustomCalendar(),
                 //SizedBox(height: 5),
@@ -101,14 +99,18 @@ class _HomescreenState extends State<HomeScreen> {
                 // Events list
                 listOfEvents!.isEmpty
                     ? defaultContainer()
-                    : CustomEventlist(
-                        events: listOfEventsToUse!, appProvider: appProvider),
+                    : Expanded(
+                        child: CustomEventlist(
+                          events: listOfEventsToUse!,
+                          appProvider: appProvider,
+                        ),
+                      ),
               ],
             ),
           );
         },
       ),
-      bottomNavigationBar: CustomBottomNav(page: 0),
+      //bottomNavigationBar: CustomBottomNav2(), //CustomBottomNav(page: 0)
     );
   }
 

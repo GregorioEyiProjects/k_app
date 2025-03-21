@@ -302,264 +302,268 @@ class _TotalEarningsState extends State<TotalEarnings> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return Container(
-              height: 350,
+            return SizedBox(
+              height: 310,
               width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+              child: Container(
+                //height: 310,
+
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    //Close button
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding:
-                              EdgeInsets.only(left: marginLeftInTheBottomSheet),
-                          child: Text(
-                            'Filter',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        ),
-                        Container(
-                          height: 35,
-                          width: 35,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: IconButton(
-                            icon: Icon(Icons.close),
-                            iconSize: 18,
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-
-                    //Select the place text
-                    Padding(
-                      padding: const EdgeInsets.only(left: 35),
-                      child: Text(
-                        'Select the place',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.blackColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w100,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-
-                    //Place
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              establishmentName = "Nawamim";
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: establishmentName == "Nawamim"
-                                  ? Border.all(
-                                      color: AppColors.lightBlueAccent,
-                                      width: 1.5,
-                                    )
-                                  : Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10.0, vertical: 15.0),
-                              child: Text(
-                                "🏢 Nawamim",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              establishmentName = "Night Market";
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: establishmentName == "Night Market"
-                                  ? Border.all(
-                                      color: AppColors.lightBlueAccent,
-                                      width: 1.5,
-                                    )
-                                  : Border.all(color: Colors.grey),
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10.0, vertical: 15.0),
-                              child: Text(
-                                "🏢 Night Market",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    //Space
-                    SizedBox(height: 10),
-
-                    //Select the Month text
-                    Padding(
-                      padding: const EdgeInsets.only(left: 35),
-                      child: Text(
-                        'Select the month',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.blackColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w100,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-
-                    //Select the Month Dropdown
-                    Padding(
-                      padding: const EdgeInsets.only(left: 35.0, right: 35.0),
-                      child: Row(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      //Close button
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          //First month
-                          Expanded(
+                          Padding(
+                            padding: EdgeInsets.only(
+                                left: marginLeftInTheBottomSheet),
+                            child: Text(
+                              'Filter',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ),
+                          Container(
+                            height: 35,
+                            width: 35,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: IconButton(
+                              icon: Icon(Icons.close),
+                              iconSize: 18,
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
+
+                      //Select the place text
+                      Padding(
+                        padding: const EdgeInsets.only(left: 35),
+                        child: Text(
+                          'Select the place',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.blackColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w100,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+
+                      //Place
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                establishmentName = "Nawamim";
+                              });
+                            },
                             child: Container(
-                              //width: double.infinity / 2.5,
-                              //color: AppColors.greyColor,
                               decoration: BoxDecoration(
-                                color: AppColors.greyColor.withOpacity(0.3),
-                                //border: Border.all(color: Colors.grey),
+                                border: establishmentName == "Nawamim"
+                                    ? Border.all(
+                                        color: AppColors.lightBlueAccent,
+                                        width: 1.5,
+                                      )
+                                    : Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(4.0),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 5.0, vertical: 2.0),
-                                child: DropdownButton(
-                                  isExpanded: true,
-                                  hint: Text(
-                                    monthSelected!,
-                                    //textAlign: TextAlign.end,
-                                    style: TextStyle(
-                                      color:
-                                          AppColors.blackColor.withOpacity(0.5),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Poppins',
-                                    ),
+                                    horizontal: 10.0, vertical: 15.0),
+                                child: Text(
+                                  "🏢 Nawamim",
+                                  style: TextStyle(
+                                    fontSize: 12,
                                   ),
-                                  items: months.map((String value) {
-                                    return DropdownMenuItem(
-                                      value: value,
-                                      child: Text(
-                                        "$value 📆",
-                                        style: TextStyle(
-                                          color: AppColors.blackColor,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'Poppins',
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      //monthSelected = value.toString();
-                                      monthSelected = value.toString();
-                                    });
-                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                establishmentName = "Night Market";
+                              });
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: establishmentName == "Night Market"
+                                    ? Border.all(
+                                        color: AppColors.lightBlueAccent,
+                                        width: 1.5,
+                                      )
+                                    : Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4.0),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10.0, vertical: 15.0),
+                                child: Text(
+                                  "🏢 Night Market",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
 
-                    //Space
-                    SizedBox(height: 10),
+                      //Space
+                      SizedBox(height: 10),
 
-                    //Button to filter
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: GestureDetector(
-                        onTap: () {
-                          //Filter the data
-                          _updateTotalBalanceTextAndFilterData(
-                            () {
-                              Navigator.of(context).pop();
-                            },
-                            (value) {
-                              Navigator.of(context).pop();
-                              CustomSnackBar.show(context,
-                                  title: "Something went wrong!",
-                                  message: value,
-                                  contentType: ContentType.failure);
-                            },
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 35.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.lightBlueAccent,
-                              borderRadius: BorderRadius.circular(10),
+                      //Select the Month text
+                      Padding(
+                        padding: const EdgeInsets.only(left: 35),
+                        child: Text(
+                          'Select the month',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.blackColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w100,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+
+                      //Select the Month Dropdown
+                      Padding(
+                        padding: const EdgeInsets.only(left: 35.0, right: 35.0),
+                        child: Row(
+                          children: [
+                            //First month
+                            Expanded(
+                              child: Container(
+                                //width: double.infinity / 2.5,
+                                //color: AppColors.greyColor,
+                                decoration: BoxDecoration(
+                                  color: AppColors.greyColor.withOpacity(0.3),
+                                  //border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(4.0),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5.0, vertical: 2.0),
+                                  child: DropdownButton(
+                                    isExpanded: true,
+                                    hint: Text(
+                                      monthSelected!,
+                                      //textAlign: TextAlign.end,
+                                      style: TextStyle(
+                                        color: AppColors.blackColor
+                                            .withOpacity(0.5),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    items: months.map((String value) {
+                                      return DropdownMenuItem(
+                                        value: value,
+                                        child: Text(
+                                          "$value 📆",
+                                          style: TextStyle(
+                                            color: AppColors.blackColor,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Poppins',
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        //monthSelected = value.toString();
+                                        monthSelected = value.toString();
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 10.0),
-                              child: Text(
-                                'Filter',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Poppins',
+                          ],
+                        ),
+                      ),
+
+                      //Space
+                      SizedBox(height: 10),
+
+                      //Button to filter
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: GestureDetector(
+                          onTap: () {
+                            //Filter the data
+                            _updateTotalBalanceTextAndFilterData(
+                              () {
+                                Navigator.of(context).pop();
+                              },
+                              (value) {
+                                Navigator.of(context).pop();
+                                CustomSnackBar.show(context,
+                                    title: "Something went wrong!",
+                                    message: value,
+                                    contentType: ContentType.failure);
+                              },
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 35.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.lightBlueAccent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20.0, vertical: 10.0),
+                                child: Text(
+                                  'Filter',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Poppins',
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );

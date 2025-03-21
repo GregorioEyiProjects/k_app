@@ -19,8 +19,10 @@ class AppointmentRepo {
   }
 
   // Add appointments
-  Future<void> addAppointment(Appointment appointment) async {
-    await _appointmentBox.put(appointment);
+  Future<Appointment> addAppointment(Appointment appointment) async {
+    final Appointment response =
+        await _appointmentBox.putAndGetAsync(appointment);
+    return response;
   }
 
   // Update appointments

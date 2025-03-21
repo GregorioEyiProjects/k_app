@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:k_app/app_colors.dart';
 import 'package:k_app/client/screen-components/billing/snackBar/customSnackBar.dart';
+import 'package:k_app/client/screen-components/home/v2/customButton2.dart';
+import 'package:k_app/client/screen-components/home/v2/display_bottom_sheet.dart';
 import 'package:k_app/global.dart';
 import 'package:k_app/client/models/home/v2/event.dart';
 import 'package:k_app/server/models/appointment-model.dart';
@@ -25,7 +27,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
   final DateTime initialDate = DateTime.now();
 
   List<Appointment>? appointmentsList;
-  //List<CalendarEvent>? events;
   TimeOfDay? pickedTime;
   final TextEditingController eventController = TextEditingController();
   final FocusNode eventFocusNode = FocusNode();
@@ -56,7 +57,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
   }
 
   //Add the event
-  void _showAddEventDialog(DateTime selectedDate) {
+/*   void _showAddEventDialog(DateTime selectedDate) {
     eventController.clear();
     userName = null;
     appoinmentDate = null;
@@ -199,6 +200,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                     height: 5,
                   ),
 
+                  //Establishment selection
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -375,6 +377,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
       },
     );
   }
+ */
 
   void _showEventDetailsDialog(List<Appointment> dayEvents) {
     showDialog(
@@ -431,10 +434,22 @@ class _CustomCalendarState extends State<CustomCalendar> {
           ),
           actions: [
             //Add new one
-            TextButton(
+            CustomButton2(
+              text: 'Add new',
+              height: 35,
+              width: 80,
+              backgroundColor: Colors.greenAccent,
+              onTap: () {
+                Navigator.of(context).pop();
+                //_showAddEventDialog(dayEvents.first.appointmentDate);
+                displayBottomSheet(context, dayEvents.first.appointmentDate);
+              },
+            ),
+            /* TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _showAddEventDialog(dayEvents.first.appointmentDate);
+                //_showAddEventDialog(dayEvents.first.appointmentDate);
+                displayBottomSheet(context, dayEvents.first.appointmentDate);
               },
               child: Text(
                 'Add new',
@@ -445,9 +460,18 @@ class _CustomCalendarState extends State<CustomCalendar> {
                   color: AppColors.blackColor,
                 ),
               ),
-            ),
+            ), */
             SizedBox(width: 10),
-            TextButton(
+            CustomButton2(
+              text: 'cancel',
+              height: 35,
+              width: 80,
+              backgroundColor: Colors.redAccent,
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            /* TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -460,7 +484,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                   color: AppColors.blackColor,
                 ),
               ),
-            ),
+            ), */
           ],
         );
       },
@@ -591,6 +615,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
     //bool isEventDay = d
     return TableCalendar(
       focusedDay: initialDate,
+      rowHeight: 35,
       calendarStyle: CalendarStyle(
         todayDecoration: BoxDecoration(
           color: AppColors.todayColodBackground,
@@ -646,7 +671,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
         if (daysEvent.isNotEmpty) {
           _showEventDetailsDialog(daysEvent);
         } else {
-          _showAddEventDialog(selectedDay);
+          displayBottomSheet(context, selectedDay);
+          // _showAddEventDialog(selectedDay);
         }
       },
     );

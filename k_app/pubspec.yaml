@@ -49,6 +49,8 @@ dependencies:
   objectbox_flutter_libs: ^4.1.0
   awesome_snackbar_content: ^0.1.5
   ffi: ^2.1.4 # For FFI ((Foreign Function Interface))
+  flutter_bloc: ^9.1.0
+  persistent_bottom_nav_bar: ^6.2.1
 
   #intl: ^0.17.0 # For date formatting
 

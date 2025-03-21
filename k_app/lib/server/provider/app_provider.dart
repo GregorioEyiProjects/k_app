@@ -34,8 +34,12 @@ class AppProvider with ChangeNotifier {
   */
 
   //Add Events to the ObjectBox list
-  addEventToObjexBox(String userName, DateTime date, TimeOfDay time,
-      String establishmentName) {
+  Future<int> addEventToObjexBox(
+    String userName,
+    DateTime date,
+    TimeOfDay time,
+    String establishmentName,
+  ) async {
     Appointment appointment = Appointment(
       userName: userName,
       appointmentDate: date,
@@ -44,12 +48,18 @@ class AppProvider with ChangeNotifier {
     );
 
     //Add to the objectBox
-    objectBox.appointmentRepo.addAppointment(appointment);
+    final Appointment appointmentResponse =
+        await objectBox.appointmentRepo.addAppointment(appointment);
 
-    //Add to the list
-    _events.add(appointment);
+    if (appointmentResponse.id != null) {
+      //Add to the list
+      _events.add(appointmentResponse);
+      notifyListeners();
+      debugPrint('Appointment added to the list');
+      return appointmentResponse.id!;
+    }
 
-    notifyListeners();
+    return -1;
   }
 
   //Delete Events or Appointments

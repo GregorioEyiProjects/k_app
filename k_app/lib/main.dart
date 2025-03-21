@@ -34,61 +34,26 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  //Initializes the shared preferences
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-
-    _setRepeat();
-  }
-
-  //Method to navigate to HOME or LOGIN screen based on the state
-  void _navigateBasedOnState() async {
-    SharedPreferences prefs = await _prefs; //Is it logged in?
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    if (isLoggedIn) {
-      //Navigate to home screen
-      navigatorKey.currentState?.pushReplacementNamed('/home');
-    } else {
-      //Navigate to login screen
-      navigatorKey.currentState?.pushReplacementNamed("/home"); //Welcome
-    }
-  }
-
-  void _setRepeat() async {
-    final SharedPreferences prefs = await _prefs;
-    isFirstTime = prefs.getBool('repeated') ?? true;
-    isFirstTime = (prefs.getBool('isFirstTime') ?? false);
-    setState(() {
-      prefs.setBool('repeated', false);
-      _navigateBasedOnState();
-    });
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-    WidgetsBinding.instance.removeObserver(this);
+    // WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
+/*     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarBrightness: Brightness.light,
         statusBarIconBrightness: Brightness.light,
       ),
-    );
+    ); */
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      initialRoute: "/welcome",
+      initialRoute: "/",
       // routes: routes,
       onGenerateRoute: generateRoute,
       builder: (context, child) {

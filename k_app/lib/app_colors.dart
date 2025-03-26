@@ -13,4 +13,5 @@ class AppColors {
   static const Color todayColodBackground = Colors.lightBlueAccent;
   static const Color todayDotColor = Colors.pinkAccent;
   static const Color lightBlueAccent = Colors.lightBlueAccent;
+  static const Color purpleAccent = Colors.purpleAccent;
 }

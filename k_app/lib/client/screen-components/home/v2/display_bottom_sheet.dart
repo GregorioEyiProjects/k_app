@@ -1,11 +1,18 @@
 import 'dart:ffi';
 
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:k_app/app_colors.dart';
+import 'package:k_app/client/screen-components/billing/snackBar/customSnackBar.dart';
 import 'package:k_app/client/screen-components/home/v2/customButton2.dart';
 import 'package:k_app/global.dart';
-import 'package:k_app/server/provider/app_provider.dart';
+import 'package:k_app/server/database/bloc/appointmemt_bloc.dart';
+import 'package:k_app/server/database/bloc/events/appointment_events.dart';
+import 'package:k_app/server/database/bloc/states/appointment_state.dart';
+import 'package:k_app/server/models/appointment-model.dart';
+//import 'package:k_app/server/provider/app_provider.dart';
 import 'package:provider/provider.dart';
 
 TimeOfDay? appointmentTime;
@@ -44,6 +51,9 @@ Future<void> displayBottomSheet(
               MediaQuery.of(context).viewInsets.bottom;
           TimeOfDay? pickedTime;
           TimeOfDay initialTime = TimeOfDay.now();
+
+          //Get the AppointmentBloc
+          final appointmentBloc = Provider.of<AppointmentBloc>(context);
 
           //Return the widget
           return Container(
@@ -107,7 +117,8 @@ Future<void> displayBottomSheet(
                               const SizedBox(height: 20),
 
                               //Button
-                              _buttonSave(context, selectedDate),
+                              _buttonSave(
+                                  context, selectedDate, appointmentBloc),
                             ],
                           ),
                         ),
@@ -146,27 +157,6 @@ Future<void> displayBottomSheet(
     },
   );
 }
-
-/* 
-void _openConfirmationDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Appointment booked'),
-        content: const Text('Your appointment has been booked successfully'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      );
-    },
-  );
-} */
 
 //Close button
 Widget _closeButton(BuildContext context) {
@@ -394,6 +384,7 @@ Row _establismentContainer(StateSetter setState) {
 Row _buttonSave(
   BuildContext context,
   DateTime selectedDate,
+  AppointmentBloc appointmentBloc,
 ) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.end,
@@ -407,9 +398,7 @@ Row _buttonSave(
             : AppColors.greyColor,
         onTap: _isItReadyToSave()
             ? () {
-                //Add the event
-                //appProvider.addEvent(
-                //  userName, appointmentTime, establishmentName);
+                //appProvider.addEvent(userName, appointmentTime, establishmentName);
                 //Close the bottom sheet
                 debugPrint('appointmentTime: $appointmentTime');
                 _openConfirmationDialog(
@@ -418,11 +407,11 @@ Row _buttonSave(
                   userName,
                   appointmentTime,
                   establishmentName,
+                  appointmentBloc,
                   () {
                     Navigator.pop(context);
                   },
                 );
-                //Navigator.pop(context);
               }
             : () {
                 debugPrint('Not ready to save');
@@ -439,114 +428,156 @@ void _openConfirmationDialog(
   String username,
   TimeOfDay? appointmentTime,
   String? establishmentName,
+  AppointmentBloc appointmentBloc,
   VoidCallback onConfirm,
 ) {
   showDialog(
     context: context,
     builder: (context) {
-      return AlertDialog(
-        title: const Text(
-          'Appointment details',
+      return BlocListener<AppointmentBloc, AppointmentState>(
+        listener: (context, state) {
+          if (state is AppointmentAdded) {
+            // Trigger the callback when the appointment is successfully added
+            onConfirm();
+            Navigator.pop(context);
+            CustomSnackBar.show(
+              context,
+              title: 'Appointment Added',
+              message: 'Successfully ✅',
+              contentType: ContentType.success,
+            );
+          } else if (state is AppointmentError) {
+            // Handle error state later
+            debugPrint('Error: ${state.message}');
+          }
+        },
+        child: _appointmentDetailsDialog(selectedDate, username,
+            appointmentTime, establishmentName, context, appointmentBloc),
+      );
+    },
+  );
+}
+
+//Appointment details dialog
+AlertDialog _appointmentDetailsDialog(
+  DateTime selectedDate,
+  String username,
+  TimeOfDay? appointmentTime,
+  String? establishmentName,
+  BuildContext context,
+  AppointmentBloc appointmentBloc,
+) {
+  return AlertDialog(
+    title: const Text(
+      'Appointment details',
+      style: TextStyle(
+        fontFamily: "Poppins",
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    content: Column(
+      mainAxisSize: MainAxisSize.min, // Ensures the dialog takes minimal space
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Review the appointment before saving it, krup ☺️!',
           style: TextStyle(
             fontFamily: "Poppins",
-            fontSize: 20,
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          '🧑🏻 $username',
+          style: TextStyle(
+            fontFamily: "Poppins",
+            fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
         ),
-        content: Column(
-          mainAxisSize:
-              MainAxisSize.min, // Ensures the dialog takes minimal space
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Review the appointment before saving it, krup ☺️!',
-              style: TextStyle(
-                fontFamily: "Poppins",
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 20),
-            if (selectedDate != null)
-              Text(
-                '🧑🏻 $username',
-                style: TextStyle(
-                  fontFamily: "Poppins",
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
 
-            //Space
-            const SizedBox(height: 10),
-            if (selectedDate != null)
-              Text(
-                '📅 ${formatDate(selectedDate)}',
-                style: TextStyle(
-                  fontFamily: "Poppins",
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            //Space
-            const SizedBox(height: 10),
-            if (appointmentTime != null)
-              Text(
-                '🕔 ${appointmentTime.hour}:${appointmentTime.minute}',
-                style: TextStyle(
-                  fontFamily: "Poppins",
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            //Space
-            const SizedBox(height: 10),
-            if (establishmentName != null)
-              Text(
-                '🏢 $establishmentName',
-                style: TextStyle(
-                  fontFamily: "Poppins",
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-          ],
+        //Space
+        const SizedBox(height: 10),
+        Text(
+          '📅 ${formatDate(selectedDate)}',
+          style: TextStyle(
+            fontFamily: "Poppins",
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        actions: <Widget>[
-          CustomButton2(
-            text: "Edit",
-            height: 35,
-            width: 80,
-            backgroundColor: Colors.redAccent,
-            onTap: () {
+        //Space
+        const SizedBox(height: 10),
+        if (appointmentTime != null)
+          Text(
+            '🕔 ${appointmentTime.hour}:${appointmentTime.minute}',
+            style: TextStyle(
+              fontFamily: "Poppins",
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        //Space
+        const SizedBox(height: 10),
+        if (establishmentName != null)
+          Text(
+            '🏢 $establishmentName',
+            style: TextStyle(
+              fontFamily: "Poppins",
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+      ],
+    ),
+    actions: <Widget>[
+      //Button EDIT
+      CustomButton2(
+        text: "Edit",
+        height: 35,
+        width: 80,
+        backgroundColor: Colors.redAccent,
+        onTap: () {
+          Navigator.pop(context); // Close the dialog
+        },
+      ),
+
+      //Button SAVE
+      CustomButton2(
+        text: "Save",
+        height: 35,
+        width: 80,
+        backgroundColor: AppColors.lightBlueAccent,
+        onTap: () async {
+          //Create the appointment
+          Appointment appointment = Appointment(
+            userName: userName,
+            appointmentDate: selectedDate,
+            appointmentTime: Appointment.timeOfDayToString(appointmentTime!),
+            establishmentName: establishmentName!,
+          );
+          debugPrint(
+              'Here is the appointment to be saved: ${appointment.toPrint()}');
+
+          //Add the event
+          appointmentBloc.add(AddAppointment(appointment: appointment));
+          /*final int response =  await Provider.of<AppProvider>(context, listen: false).addEventToObjexBox(
+              username,
+              selectedDate,
+              appointmentTime!,
+              establishmentName!,
+            ); */
+          /*  if (response != -1) {
               Navigator.pop(context); // Close the dialog
-            },
-          ),
-          CustomButton2(
-            text: "Save",
-            height: 35,
-            width: 80,
-            backgroundColor: AppColors.lightBlueAccent,
-            onTap: () async {
-              final int response =
-                  await Provider.of<AppProvider>(context, listen: false)
-                      .addEventToObjexBox(
-                username,
-                selectedDate,
-                appointmentTime!,
-                establishmentName!,
-              );
-              if (response != -1) {
-                Navigator.pop(context); // Close the dialog
-                onConfirm(); // Call the callback
-              }
-              /* Navigator.pop(context); // Close the dialog
-              onConfirm(); // Call the callback */
-            },
-          ),
-        ],
-      );
-    },
+              onConfirm(); // Call the callback
+            } */
+          /* Navigator.pop(context); // Close the dialog
+            onConfirm(); // Call the callback */
+        },
+      ),
+    ],
   );
 }
 

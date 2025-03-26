@@ -1,14 +1,20 @@
-import 'dart:math';
-
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:k_app/app_colors.dart';
 import 'package:k_app/client/screen-components/billing/filter/filterSection.dart';
 import 'package:k_app/client/screen-components/billing/listContainers/billingList.dart';
+import 'package:k_app/client/screen-components/billing/snackBar/customSnackBar.dart';
 import 'package:k_app/client/screen-components/billing/totalEarnings/totalEarnings.dart';
-import 'package:k_app/client/screen-components/home/v2/customBottomNav.dart';
+//import 'package:k_app/client/screen-components/home/v2/customBottomNav.dart';
 import 'package:k_app/global.dart';
+//import 'package:k_app/server/database/bloc/appointmemt_bloc.dart';
+//import 'dart:math';
+import 'package:k_app/server/database/bloc/billing_bloc.dart';
+import 'package:k_app/server/database/bloc/events/billing_events.dart';
+import 'package:k_app/server/database/bloc/states/billing_state.dart';
+//import 'package:k_app/server/models/appointment-model.dart';
 import 'package:k_app/server/models/billing-model.dart';
-import 'package:k_app/server/provider/app_provider.dart';
 import 'package:provider/provider.dart';
 
 class BillingScreen extends StatefulWidget {
@@ -19,6 +25,7 @@ class BillingScreen extends StatefulWidget {
 }
 
 class _BillingScreenState extends State<BillingScreen> {
+  late BillingBloc billingBloc;
   String? defaultDateText;
   DateTime? dateToFilter;
   List<Billing>? billingList; // main list
@@ -36,8 +43,11 @@ class _BillingScreenState extends State<BillingScreen> {
     defaultDateText = 'Today';
     establishedmentColor = AppColors.greyColor;
 
-    //Get the total amount for each establishment
-    //getTheTotalAmountForEachEstablisment(billingList!);
+    //Fetch the data (with Bloc) so it can stop using the initial state
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      context.read<BillingBloc>().add(FetchBillings());
+      //context.read<BillingBloc>().add(FetchCurrentDayAndMonthBillings());
+    });
   }
 
   void getTheTotalAmountForEachEstablisment(List<Billing> billingList) {
@@ -48,14 +58,14 @@ class _BillingScreenState extends State<BillingScreen> {
         .map((item) => item.amount)
         .fold(0.0, (value, item) => value! + item);
 
-    print("Total Nawamim Amount: $totalNawamimAmount");
+    debugPrint("Total Nawamim Amount: $totalNawamimAmount");
 
     totalNightMarketAmount = billingList
         .where((item) => item.establismentName == 'Night Market')
         .map((item) => item.amount)
         .fold(0.0, (value, item) => value! + item);
 
-    print("Total Night Market Amount: $totalNightMarketAmount");
+    debugPrint("Total Night Market Amount: $totalNightMarketAmount");
   }
 
   /*
@@ -64,6 +74,20 @@ class _BillingScreenState extends State<BillingScreen> {
     AppProvider notifies listeners, which causes the billingList and billingListToUse to be reset
       to the full list of items and i could not assign the new list to new billingListToUse list.
   */
+
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    billingBloc = context.read<BillingBloc>();
+  }
+
+  @override
+  void dispose() {
+    //billingBloc.add(FetchBillings());
+    //debugPrint("Resetting BillingBloc state to default");
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,77 +113,292 @@ class _BillingScreenState extends State<BillingScreen> {
           ],
         ),
       ),
-      body: Consumer<AppProvider>(
-        builder: (context, appProvider, child) {
-          billingList = appProvider.billingList;
-          billingListToUse ??= billingList?.reversed.toList() ?? [];
-          getTheTotalAmountForEachEstablisment(billingListToUse!);
+      body: BlocConsumer<BillingBloc, BillingState>(
+        builder: (context, state) {
+          if (state is BillingInitial) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (state is FetchBillingLoaded) {
+            debugPrint("state is FetchBillingLoaded in BillingScreen");
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.only(left: marginleft, right: marginRigth),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 5),
+            billingList = state.billingsLoaded;
+            billingListToUse = billingList?.reversed.toList() ?? [];
+            //Get the total amount for each establishment
+            getTheTotalAmountForEachEstablisment(billingList!);
 
-                //Total earnings
-                TotalEarnings(
-                  billingList: billingListToUse ?? [],
-                  provider: appProvider,
+            return _billingScreenContent(context, state);
+          }
+          if (state is FilterCurrentMonthBillingsLoaded) {
+            debugPrint(
+                "state is FilterCurrentMonthBillingsLoaded in BillingScreen");
+
+            //debugPrint("FilterCurrentMonthBillingsLoaded in Builder");
+            billingList = state.originalCachedBillings;
+            billingListToUse = billingList?.reversed.toList() ?? [];
+            getTheTotalAmountForEachEstablisment(billingList!);
+
+            return _billingScreenContent(context, state);
+          }
+          if (state is FetchBillingsByEstablishmentAndMonthLoaded) {
+            debugPrint(
+                "state is FilterCurrentMonthBillingsLoaded in BillingScreen");
+
+            billingList = state.billingsFound;
+            billingListToUse = billingList?.reversed.toList() ?? [];
+            getTheTotalAmountForEachEstablisment(billingList!);
+
+            return _billingScreenContent(context, state);
+          }
+          if (state is BillingsByDayLoaded) {
+            debugPrint("BillingsByDayLoaded in BillingScreen");
+            billingList = state.billingsFound;
+            billingListToUse = billingList?.reversed.toList() ?? [];
+            debugPrint(
+                "Amount of items in the BillingsByDayLoaded >>>  ${billingListToUse!.length}");
+            getTheTotalAmountForEachEstablisment(billingList!);
+
+            return _billingScreenContent(context, state);
+          } else {
+            debugPrint("No STATE FOUND in BillingScreen");
+            return Center(
+              child: Text(
+                "No data krup 😊!",
+                style: TextStyle(
+                  fontFamily: "Poppins",
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-                SizedBox(height: 5),
-                Divider(
-                  color: AppColors.greyColor,
-                  thickness: 1,
-                ),
-                SizedBox(height: 10),
-                Text(
-                  '$defaultDateText ☀️',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-
-                //Filter and see all items
-                _filterAndSeeAllSection(context, billingList!, appProvider),
-
-                // Billing list
-
-                billingList!.isEmpty
-                    ? _defaultBillingContainer()
-                    : _customBillingList(billingListToUse ?? [], appProvider),
-
-                SizedBox(height: 15),
-
-                // Summarize the total amount of items
-                Text(
-                  'Earnings 💵',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                SizedBox(height: 10),
-
-                //Taps (NAWAMIM and NIGHT MARKET)
-                billingList!.isEmpty
-                    ? _defaultBillingContainer(text: "No earings yet krup!")
-                    : _establisments(appProvider, context),
-              ],
-            ),
-          );
+              ),
+            );
+          }
         },
-        child: Text('Billing Screen'),
+        listener: (context, state) {},
       ),
-      //bottomNavigationBar: CustomBottomNav(page: 1),
+    );
+  }
+
+//Billing Screen Content
+  SingleChildScrollView _billingScreenContent(
+    BuildContext context,
+    state,
+  ) {
+    final billingBlocProvider = context.read<BillingBloc>();
+    //final billingProvider = Provider.of<BillingBloc>(context);
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(left: marginleft, right: marginRigth),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 5),
+
+          //Total earnings
+          TotalEarnings(),
+          SizedBox(height: 5),
+          Divider(
+            color: AppColors.greyColor,
+            thickness: 1,
+          ),
+          SizedBox(height: 10),
+          Text(
+            state.selectedDateText + ' ☀️',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
+            ),
+          ),
+
+          //Filter and see all items
+          _filterAndSeeAllSection(
+            context,
+            billingBlocProvider,
+            state.selectedDateText,
+          ),
+
+          // Billing list
+          billingList!.isEmpty
+              ? _defaultBillingContainer()
+              : _customBillingList(
+                  billingListToUse ?? [],
+                ),
+
+          SizedBox(height: 15),
+
+          // Summarize the total amount of items
+          Text(
+            'Earnings 💵',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Poppins',
+            ),
+          ),
+          SizedBox(height: 10),
+
+          //Taps (NAWAMIM and NIGHT MARKET)
+          billingList!.isEmpty
+              ? _defaultBillingContainer(text: "No earings yet krup!")
+              : _establisments(context),
+        ],
+      ),
+    );
+  }
+
+// See all Items and Filter them
+  Row _filterAndSeeAllSection(
+    BuildContext context,
+    BillingBloc billingBloc,
+    String selectedDateText,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        //Filter section
+        FilterSection(
+          isFilteredFromThePreviousScreen: false,
+          hintText: selectedDateText,
+          onTapped: (value) async {
+            setState(() {
+              defaultDateText = value;
+              //print("Value: $value");
+            });
+
+            DateTime now = DateTime.now();
+            DateTime startDate;
+            //DateTime endDate = now;
+            DateTime endDate =
+                DateTime(now.year, now.month, now.day, 23, 59, 59);
+            //Filter the items
+            switch (value) {
+              case "Today":
+                startDate = DateTime(
+                  now.year,
+                  now.month,
+                  now.day,
+                );
+                print("Today: ");
+                break;
+              case "Yesterday":
+                startDate = DateTime(
+                  now.year,
+                  now.month,
+                  now.day - 1,
+                );
+                print("Yesterday: ");
+
+                break;
+              case "Last 7 days":
+                startDate = DateTime(
+                  now.year,
+                  now.month,
+                  now.day - 7,
+                );
+                print("Last 7 days: ");
+                //dateToFilter = "Last 7 days";
+                break;
+              case "Last 30 days":
+                startDate = DateTime(
+                  now.year,
+                  now.month,
+                  now.day - 30,
+                );
+                print("Last 30 days: ");
+                break;
+              default:
+                startDate = DateTime(2000); // Default to a very early date
+                print("Default: $startDate");
+                break;
+            }
+
+            print("Start Date: $startDate");
+            print("End Date: $endDate");
+
+            //Get the items by date
+            billingBloc.add(
+              FetchBillingsByDay(
+                startDate: startDate,
+                endDate: endDate,
+              ),
+            );
+          },
+        ),
+
+        //See all items
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            TextButton(
+              onPressed: () {
+                billingBloc.add(FetchBillings());
+                debugPrint(
+                    "Resetting BillingBloc state to default  and Navigate to see all items");
+
+                final args = {
+                  'filterName': "All",
+                  "isFilteredFromThePreviousScreen": false,
+                };
+                navigatorKey.currentState?.pushNamed(
+                  '/seeAllBilling',
+                  arguments: args,
+                );
+              },
+              child: Text(
+                'See all',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.blackColor,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                //Navigate to the see all billing screen
+                final args = {
+                  'filterName': "All",
+                  "isFilteredFromThePreviousScreen": false,
+                };
+                navigatorKey.currentState
+                    ?.pushNamed('/seeAllBilling', arguments: args);
+              },
+              child: Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.blackColor,
+                size: 16,
+              ),
+            )
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Custom Billing List
+  Container _customBillingList(myReversedBillingList) {
+    debugPrint(
+        "Amount of items in the _customBillingList >>>  ${myReversedBillingList.length}");
+    const int maxItems = 3;
+
+    // Reverse the list to display the last items first
+    //List<Billing> reversedBillingList = myBillingList.reversed.toList();
+
+    //Take the fist 3 items
+    List<Billing> limitedBillingList =
+        myReversedBillingList.take(maxItems).toList();
+
+    return Container(
+      height: 260,
+      child: limitedBillingList.isEmpty
+          ? _defaultBillingContainer(text: 'No income $defaultDateText')
+          : BillingList(billingList: limitedBillingList),
     );
   }
 
 //Earnings - Establisments
-  Row _establisments(AppProvider appProvider, BuildContext context) {
+  Row _establisments(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
@@ -180,7 +419,6 @@ class _BillingScreenState extends State<BillingScreen> {
 
             final args = {
               'billingList': listOfNawamimItems,
-              'provider': appProvider,
               "filterName": filterName,
               "isFilteredFromThePreviousScreen": true,
             };
@@ -247,7 +485,6 @@ class _BillingScreenState extends State<BillingScreen> {
 
             final args = {
               'billingList': listOfNightMarketItems,
-              'provider': appProvider,
               "filterName": filterName,
               "isFilteredFromThePreviousScreen": true,
             };
@@ -297,167 +534,6 @@ class _BillingScreenState extends State<BillingScreen> {
           ),
         ),
       ],
-    );
-  }
-
-// See all Items and Filter them
-  Row _filterAndSeeAllSection(BuildContext context, List<Billing> myBillingList,
-      AppProvider appProvider) {
-    //return FilterAndSeeAll()
-
-    print("Amount of items >>>  ${myBillingList.length}");
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        //Filter section
-        FilterSection(
-          isFilteredFromThePreviousScreen: false,
-          onTapped: (value) async {
-            setState(() {
-              defaultDateText = value;
-              //print("Value: $value");
-            });
-
-            DateTime now = DateTime.now();
-            DateTime startDate;
-            //DateTime endDate = now;
-            DateTime endDate =
-                DateTime(now.year, now.month, now.day, 23, 59, 59);
-            //Filter the items
-            switch (value) {
-              case "Today":
-                startDate = DateTime(
-                  now.year,
-                  now.month,
-                  now.day,
-                );
-                print("Today: ");
-                break;
-              case "Yesterday":
-                startDate = DateTime(
-                  now.year,
-                  now.month,
-                  now.day - 1,
-                );
-                print("Yesterday: ");
-
-                break;
-              case "Last 7 days":
-                startDate = DateTime(
-                  now.year,
-                  now.month,
-                  now.day - 7,
-                );
-                print("Last 7 days: ");
-                //dateToFilter = "Last 7 days";
-                break;
-              case "Last 30 days":
-                startDate = DateTime(
-                  now.year,
-                  now.month,
-                  now.day - 30,
-                );
-                print("Last 30 days: ");
-                break;
-              default:
-                startDate = DateTime(2000); // Default to a very early date
-                print("Default: $startDate");
-                break;
-            }
-
-            print("Start Date: $startDate");
-            print("End Date: $endDate");
-
-            //Get the items by date
-            final appointmentsByDate =
-                await appProvider.getBillingByDate(startDate, endDate);
-
-            if (appointmentsByDate.reversed.toList().isEmpty) {
-              billingListToUse = [];
-            } else {
-              //Update the list
-              setState(() {
-                //billingList = appointmentsByDate;
-                billingListToUse = appointmentsByDate.reversed.toList();
-
-                print("New amount of items  ${billingListToUse!.length}");
-                print("billingListToUse  $billingListToUse");
-              });
-            }
-          },
-        ),
-
-        //See all items
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            TextButton(
-              onPressed: () {
-                //Navigate to the appointments screen
-                //Navigate to the see all billing screen
-                //navigatorKey.currentState?.pushNamed('/seeAllBilling', arguments: myBillingList, provider: appProvider);
-
-                final args = {
-                  'billingList': myBillingList,
-                  'provider': appProvider,
-                  'filterName': "All",
-                  "isFilteredFromThePreviousScreen": false,
-                };
-                navigatorKey.currentState
-                    ?.pushNamed('/seeAllBilling', arguments: args);
-              },
-              child: Text(
-                'See all',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.blackColor,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                //Navigate to the see all billing screen
-                final args = {
-                  'billingList': myBillingList,
-                  'provider': appProvider,
-                  'filterName': "All",
-                  "isFilteredFromThePreviousScreen": false,
-                };
-                navigatorKey.currentState
-                    ?.pushNamed('/seeAllBilling', arguments: args);
-              },
-              child: Icon(
-                Icons.arrow_forward_ios,
-                color: AppColors.blackColor,
-                size: 16,
-              ),
-            )
-          ],
-        ),
-      ],
-    );
-  }
-
-  // Custom Billing List
-  Container _customBillingList(myReversedBillingList, AppProvider appProvider) {
-    print(
-        "Amount of items in the _customBillingList >>>  ${myReversedBillingList.length}");
-    const int maxItems = 3;
-
-    // Reverse the list to display the last items first
-    //List<Billing> reversedBillingList = myBillingList.reversed.toList();
-
-    //Take the fist 3 items
-    List<Billing> limitedBillingList =
-        myReversedBillingList.take(maxItems).toList();
-
-    return Container(
-      height: 260,
-      child: limitedBillingList.isEmpty
-          ? _defaultBillingContainer(text: 'No income $defaultDateText')
-          : BillingList(billingList: limitedBillingList),
     );
   }
 

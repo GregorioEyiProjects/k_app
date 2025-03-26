@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:k_app/client/screen-components/home/v2/customBottomNav2.dart';
 import 'package:k_app/global.dart';
 import 'package:k_app/router.dart';
 import 'package:k_app/client/screens/welcome.dart';
+import 'package:k_app/server/database/bloc/appointmemt_bloc.dart';
+import 'package:k_app/server/database/bloc/billing_bloc.dart';
 import 'package:k_app/server/database/objectBox.dart';
-import 'package:k_app/server/provider/app_provider.dart';
+//import 'package:k_app/server/provider/app_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,9 +21,11 @@ void main() async {
 
   //Run the app
   runApp(
-    MultiProvider(
+    MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AppProvider(objectBox))
+        BlocProvider(
+            create: (context) => AppointmentBloc(objectBox: objectBox)),
+        BlocProvider(create: (context) => BillingBloc(objectBox: objectBox)),
       ],
       child: const MyApp(),
     ),
@@ -38,24 +44,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     // TODO: implement initState
     super.initState();
-    // WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   Widget build(BuildContext context) {
-/*     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.light,
-        statusBarIconBrightness: Brightness.light,
-      ),
-    ); */
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       initialRoute: "/",
       // routes: routes,
       onGenerateRoute: generateRoute,
+      home: const CustomBottomNav2(),
       builder: (context, child) {
         MediaQueryData data = MediaQuery.of(context);
         return MediaQuery(

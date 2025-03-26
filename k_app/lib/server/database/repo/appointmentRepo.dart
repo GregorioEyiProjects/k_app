@@ -14,6 +14,12 @@ class AppointmentRepo {
   AppointmentRepo(Store store) : _appointmentBox = store.box<Appointment>();
 
   // Get appointments
+  Stream<List<Appointment>> getAppointments2() {
+    final query = _appointmentBox.query().watch(triggerImmediately: true);
+    return query.map((query) => query.find());
+    //return _appointmentBox.getAll();
+  }
+
   Future<List<Appointment>> getAppointments() async {
     return _appointmentBox.getAll();
   }
@@ -32,7 +38,9 @@ class AppointmentRepo {
   }
 
   // Delete appointments
-  void deleteAppointment(int appointmentID) async {
-    await _appointmentBox.remove(appointmentID);
+  Future<bool> deleteAppointment(int appointmentID) async {
+    final Future<bool> response = _appointmentBox.removeAsync(appointmentID);
+    //await _appointmentBox.remove(appointmentID);
+    return response;
   }
 }

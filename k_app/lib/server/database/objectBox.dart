@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:k_app/objectbox.g.dart';
 import 'package:k_app/server/database/repo/appointmentRepo.dart';
 import 'package:k_app/server/database/repo/billingRepo.dart';
@@ -38,6 +39,7 @@ class ObjectBox {
       directory: p.join(
           (await getApplicationDocumentsDirectory()).path, 'Appointments'),
     );
+    debugPrint("Here is the store $store");
     return ObjectBox._create(store);
   }
 }

@@ -16,19 +16,23 @@ class BillingRepo {
   }
 
   // Add billings
-  Future<void> addBilling(Billing billing) async {
-    await _billingBox.putAsync(billing);
+  Future<Billing> addBilling(Billing billing) async {
+    final response = await _billingBox.putAndGetAsync(billing);
+    return response;
   }
 
   // Update a billing
-  Future<Billing?> updateBilling(int id, Billing billing) async {
+  Future<Billing?> updateBilling(
+    int id,
+    Billing billing,
+  ) async {
     //Check if the billing is already in the database//
     final query = _billingBox.query(Billing_.id.equals(id)).build();
     final Billing? billingList = query.findFirst();
     query.close();
 
     if (billingList == null) {
-      print('Billing not found');
+      debugPrint('Billing not found');
       return null;
     }
 
@@ -39,7 +43,9 @@ class BillingRepo {
       debugPrint('Billing updated. Now returning from the BillingRepo. . .');
       return response;
     } else {
-      print('Billing ID is not the same');
+      debugPrint('Billing ID is not the same');
+      //Return null for now
+      return null;
     }
   }
 
@@ -51,8 +57,10 @@ class BillingRepo {
 
   //Get billings by date
   Future<List<Billing>> getBillingListByDate(
-      DateTime startDate, DateTime endDate) async {
-    print('Filtering data . . . ');
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    debugPrint('Filtering data in DB . . . ');
 
     // List<Billing> filteredBillingListToSend = [];
     //Query
@@ -68,6 +76,8 @@ class BillingRepo {
       print('No data found');
       return [];
     }
+
+    debugPrint('Done searching. Now returning . . . ');
 
     return filteredBillingList;
   }
@@ -158,8 +168,8 @@ class BillingRepo {
     DateTime startDate = DateTime(currentYear, monthNumber, 1);
     DateTime endDate =
         DateTime(currentYear, monthNumber + 1, 1).subtract(Duration(days: 1));
-    print('Start Date >>> : $startDate');
-    print('End Date >>> : $endDate');
+    debugPrint('Start Date >>> : $startDate');
+    debugPrint('End Date >>> : $endDate');
 
     //Query
     final query = _billingBox

@@ -8,7 +8,7 @@ import 'package:k_app/client/screen-components/home/v2/customButton.dart';
 
 import 'package:k_app/global.dart';
 import 'package:k_app/server/models/billing-model.dart';
-import 'package:k_app/server/provider/app_provider.dart';
+//import 'package:k_app/server/provider/app_provider.dart';
 import 'package:provider/provider.dart';
 
 class BillingList extends StatefulWidget {
@@ -28,7 +28,10 @@ class _BillingListState extends State<BillingList> {
     print("Position: $_offset");
   }
 
-  void _onLongPress(constext, Billing? billing, AppProvider appProvider) async {
+  void _onLongPress(
+    constext,
+    Billing? billing,
+  ) async {
     RenderObject? overlay = Overlay.of(context).context.findRenderObject();
 /* 
     final result = await showMenu(
@@ -183,7 +186,7 @@ class _BillingListState extends State<BillingList> {
       case "Delete":
         debugPrint("Delete on id ${billing!.id}");
         //Show a warning dialog
-        _showDeleteDialog(appProvider, billing.id!);
+        _showDeleteDialog(billing.id!);
         break;
       default:
         debugPrint("Default");
@@ -191,7 +194,7 @@ class _BillingListState extends State<BillingList> {
     }
   }
 
-  Future<dynamic> _showDeleteDialog(AppProvider appProvider, int id) {
+  Future<dynamic> _showDeleteDialog(int id) {
     return showDialog(
       context: context,
       builder: (context) {
@@ -222,7 +225,8 @@ class _BillingListState extends State<BillingList> {
                   backgroungColor: AppColors.textColor.withOpacity(0.8),
                   onPressed: () async {
                     debugPrint("Delete on id .... $id");
-                    bool wasItRemove = await appProvider.deleteBilling(id);
+                    // bool wasItRemove = await appProvider.deleteBilling(id);
+                    bool wasItRemove = true;
                     if (wasItRemove) {
                       //Show a snackbar
                       CustomSnackBar.show(
@@ -251,8 +255,9 @@ class _BillingListState extends State<BillingList> {
 
   @override
   Widget build(BuildContext context) {
-    final AppProvider appProvider =
-        Provider.of<AppProvider>(context, listen: false);
+    //final AppProvider appProvider = Provider.of<AppProvider>(context, listen: false);
+    debugPrint(
+        "BillingList length in the BillingList : ${widget.billingList.length}");
     return ListView.builder(
       padding: EdgeInsets.zero,
       itemCount: widget.billingList.length,
@@ -274,127 +279,131 @@ class _BillingListState extends State<BillingList> {
 
               //Billing object
               //Billing billing = widget.billingList[index];
-              _onLongPress(context, billing, appProvider);
+              _onLongPress(context, billing);
             },
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.greyColor,
-                  width: 1,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(5.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    //Top row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "🧑🏻 ${billing.customerName}",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                        //Establish the Name
-
-                        //Icon(Icons.arrow_forward_ios),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "${billing.amount} THB",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              billing.establismentName ?? "No Establishment",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 5),
-                    Divider(
-                      color: AppColors.greyColor,
-                      thickness: 1,
-                    ),
-                    //Bottom row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Left Column
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "📅",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              formatDate(billing.appointmentDate.toLocal()),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ),
-                        // Right Column
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "🕞",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              Billing.stringToTimeOfDay(billing.appointmentTime)
-                                  .format(context),
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ),
+            child: _listContainer(billing, context),
           ),
         );
       },
+    );
+  }
+
+  Container _listContainer(Billing billing, BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.greyColor,
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(5.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            //Top row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "🧑🏻 ${billing.customerName}",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                //Establish the Name
+
+                //Icon(Icons.arrow_forward_ios),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "${billing.amount} THB",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      billing.establismentName ?? "No Establishment",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 5),
+            Divider(
+              color: AppColors.greyColor,
+              thickness: 1,
+            ),
+            //Bottom row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left Column
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "📅",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      formatDate(billing.appointmentDate.toLocal()),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+                // Right Column
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "🕞",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      Billing.stringToTimeOfDay(billing.appointmentTime)
+                          .format(context),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
     );
   }
 }

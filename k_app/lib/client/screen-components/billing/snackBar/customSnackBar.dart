@@ -24,6 +24,7 @@ class CustomSnackBar {
     ContentType contentType = ContentType.success,
     double elevation = 10,
     Duration duration = const Duration(seconds: 3),
+    String heroTag = 'defaultHeroTag',
   }) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()

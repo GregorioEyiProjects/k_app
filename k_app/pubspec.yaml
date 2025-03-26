@@ -51,6 +51,8 @@ dependencies:
   ffi: ^2.1.4 # For FFI ((Foreign Function Interface))
   flutter_bloc: ^9.1.0
   persistent_bottom_nav_bar: ^6.2.1
+  equatable: ^2.0.7
+  fl_chart: ^0.70.2
 
   #intl: ^0.17.0 # For date formatting
 

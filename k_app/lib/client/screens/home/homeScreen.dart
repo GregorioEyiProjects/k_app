@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:k_app/app_colors.dart';
 import 'package:k_app/client/screen-components/home/v2/customBottomNav.dart';
 import 'package:k_app/client/screen-components/home/v2/customBottomNav2.dart';
 import 'package:k_app/global.dart';
 import 'package:k_app/client/screen-components/home/v2/customCalendar.dart';
 import 'package:k_app/client/screen-components/home/v2/customEventList.dart';
+import 'package:k_app/server/database/bloc/appointmemt_bloc.dart';
+import 'package:k_app/server/database/bloc/events/appointment_events.dart';
+import 'package:k_app/server/database/bloc/states/appointment_state.dart';
 import 'package:k_app/server/models/appointment-model.dart';
 import 'package:k_app/server/models/billing-model.dart';
-import 'package:k_app/server/provider/app_provider.dart';
+//import 'package:k_app/server/provider/app_provider.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -29,96 +33,102 @@ class _HomescreenState extends State<HomeScreen> {
 
     filterValue = 'All';
 
-    //Fetch the data
+    //Fetch the data (with Bloc)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Provider.of<AppProvider>(context, listen: false).fetchEvents();
+      context.read<AppointmentBloc>().add(FetchAppointments());
     });
-  }
-
-  void filterAppointmentsByEstablishmentName(List<Appointment> listOfEvents) {
-    final result = listOfEvents
-        .where((item) => item.establishmentName == filterValue)
-        .toList();
-
-    if (filterValue == 'All') {
-      setState(() {
-        listOfEventsToUse = listOfEvents.reversed.toList();
-      });
-      return;
-    }
-
-    //setState(() {});
-    listOfEventsToUse = result.reversed.toList();
-    print("Here is the filtered value ${listOfEventsToUse!.length}");
-    print("Here is the filtered list ${listOfEventsToUse.toString()}");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: Consumer<AppProvider>(
-        builder: (context, appProvider, child) {
-          listOfEvents = appProvider.listOfEvents;
-
-          // Update listOfEventsToUse whenever listOfEvents changes
-          if (filterValue == 'All') {
-            listOfEventsToUse = listOfEvents?.reversed.toList() ?? [];
-          } else {
-            filterAppointmentsByEstablishmentName(listOfEvents!);
-          }
-          //listOfEventsToUse ??= listOfEvents?.reversed.toList() ?? []; // EdgeInsets.only(left: marginleft, right: marginRigth)
-
-          return Padding(
-            padding: EdgeInsets.only(left: marginleft, right: marginRigth),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // /SizedBox(height: 20),
-                // Calendar
-                CustomCalendar(),
-                //SizedBox(height: 5),
-                // Events title
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Appointments 📅',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins',
-                      ),
-                    ),
-
-                    //Filter
-                    _filterSection(),
-                  ],
+      body: BlocBuilder<AppointmentBloc, AppointmentState>(
+        builder: (context, state) {
+          //Check the states
+          if (state is AppointmentLoading) {
+            return Center(child: CircularProgressIndicator());
+          } else if (state is AppointmentLoaded) {
+            listOfEvents = state.appointments;
+            return _homeScreenContent();
+          } else if (state is AppointmentFiltered) {
+            return _homeScreenContent();
+          } else if (state is AppointmentError) {
+            return Center(
+              child: Text(
+                state.message,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
                 ),
-                //SizedBox(height: 5),
-                // Events list
-                listOfEvents!.isEmpty
-                    ? defaultContainer()
-                    : Expanded(
-                        child: CustomEventlist(
-                          events: listOfEventsToUse!,
-                          appProvider: appProvider,
-                        ),
-                      ),
-              ],
-            ),
-          );
+              ),
+            );
+          } else {
+            return Center(
+              child: Text(
+                'Initial state',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+            );
+          }
         },
       ),
-      //bottomNavigationBar: CustomBottomNav2(), //CustomBottomNav(page: 0)
     );
   }
 
-  DropdownButton<int> _filterSection() {
+//Home screen content
+  Widget _homeScreenContent() {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(left: marginleft, right: marginRigth),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // /SizedBox(height: 20),
+            // Calendar
+            CustomCalendar(),
+            //SizedBox(height: 5),
+            // Events title
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Appointmentss 📅',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+
+                //Filter
+                _filterSection(filterValue!),
+              ],
+            ),
+            //SizedBox(height: 5),
+            // Events list
+            listOfEvents!.isEmpty
+                ? defaultContainer()
+                : Expanded(
+                    child: CustomEventlist(),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+//Filter section (dropdown). Method inside the home screen content
+  DropdownButton<int> _filterSection(String currentFilter) {
     return DropdownButton(
       hint: filterValue == null
           ? Text(
-              'Filter',
+              currentFilter,
               style: TextStyle(
                 color: AppColors.blackColor.withOpacity(0.6),
                 fontSize: 14,
@@ -177,35 +187,31 @@ class _HomescreenState extends State<HomeScreen> {
         print("Value: $value");
         switch (value) {
           case 1:
-            //print('Today');
             setState(() {
               filterValue = 'All';
-              //appProvider.filterEvents('Nawamim');
             });
             break;
           case 2:
-            //print('Yesterday');
             setState(() {
               filterValue = 'Nawamim';
-              //appProvider.filterEvents('Night Market');
             });
             break;
           case 3:
-            //print('Yesterday');
             setState(() {
               filterValue = 'Night Market';
-              //appProvider.filterEvents('Night Market');
             });
             break;
         }
 
-        filterAppointmentsByEstablishmentName(listOfEvents!);
-
-        // filterAppointmentsByEstablishmentName(listOfEvents!);
+        //Fetch the data (with Bloc)
+        context
+            .read<AppointmentBloc>()
+            .add(FilterAppointmentsByEstablishmentName(filterValue!));
       },
     );
   }
 
+//Default container. Method inside the home screen content as empty appointments
   Widget defaultContainer() {
     return Center(
       child: Padding(

@@ -41,4 +41,15 @@ class Appointment {
     final minute = int.parse(parts[1]);
     return TimeOfDay(hour: hour, minute: minute);
   }
+
+  //ToString
+  Map<String, dynamic> toPrint() {
+    return {
+      'id': id,
+      'userName': userName,
+      'appointmentDate': appointmentDate,
+      'appointmentTime': appointmentTime,
+      'establishmentName': establishmentName,
+    };
+  }
 }

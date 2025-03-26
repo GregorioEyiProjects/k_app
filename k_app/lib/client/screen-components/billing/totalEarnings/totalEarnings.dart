@@ -1,16 +1,17 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:k_app/app_colors.dart';
 import 'package:k_app/client/screen-components/billing/snackBar/customSnackBar.dart';
 import 'package:k_app/global.dart';
+import 'package:k_app/server/database/bloc/billing_bloc.dart';
+import 'package:k_app/server/database/bloc/events/billing_events.dart';
+import 'package:k_app/server/database/bloc/states/billing_state.dart';
 import 'package:k_app/server/models/billing-model.dart';
-import 'package:k_app/server/provider/app_provider.dart';
+//import 'package:k_app/server/provider/app_provider.dart';
 
 class TotalEarnings extends StatefulWidget {
-  final List<Billing>? billingList;
-  final AppProvider? provider;
-
-  const TotalEarnings({super.key, this.billingList, this.provider});
+  const TotalEarnings({super.key});
 
   @override
   State<TotalEarnings> createState() => _TotalEarningsState();
@@ -47,58 +48,11 @@ class _TotalEarningsState extends State<TotalEarnings> {
     totalBalanceText = "My total balance";
     totalEarningsPerMonthOrTotal = 0.0;
     totalEarningsPerDay = 0.0;
-
-    //Update the total amount for today
-    _updateTotalAmountComponent();
-  }
-
-  void _updateTotalAmountComponent() async {
-    // Get and Update the total amount for the current month or total
-    final billingListForCurrentMonth =
-        await widget.provider!.getCurrentMonthBillings();
-
-    // Calculate the total amount for the current month
-    final double totalAmount = billingListForCurrentMonth.fold(
-        0.0, (previousValue, element) => previousValue + element.amount);
-    /* print("Here is the total amount for this month >>> $totalAmount");
-       for (Billing billing in billingListForCurrentMonth) {
-      
-    } */
-
-    // Get and Update the total amount for today
-    DateTime now = DateTime.now();
-    DateTime startTime = DateTime(now.year, now.month, now.day);
-    DateTime endTime = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    //DateTime endTime = now;
-    print("Here is the start time $startTime");
-    print("Here is the end time $endTime");
-    final todalTodayAmountResponse =
-        await widget.provider!.getBillingByDate(startTime, endTime);
-
-    print("Returning from filtering . . .");
-    print("Here is the total amount for today ${todalTodayAmountResponse}");
-
-    for (Billing billing in todalTodayAmountResponse) {
-      print("Here is the billing amount ${billing.amount}");
-    }
-    //print("Here is the total amount with fold in _updateTotalTodayAmount method  $todalAmount");
-
-    setState(() {
-      totalEarningsPerMonthOrTotal = totalAmount;
-      if (todalTodayAmountResponse.isNotEmpty) {
-        totalEarningsPerDay = todalTodayAmountResponse.fold(
-            0.0, (previousValue, element) => previousValue! + element.amount);
-        print("Here is the total amount for today ${totalEarningsPerDay}");
-      } else {
-        totalEarningsPerDay = 0.0;
-        print("Here is the total amount for today ${totalEarningsPerDay}");
-      }
-    });
   }
 
 //Update the total balance text (Used when the user filters the data)
   void _updateTotalBalanceTextAndFilterData(
-      VoidCallback onComplete, ValueChanged onError) async {
+      BillingBloc bloc, VoidCallback onComplete, ValueChanged onError) async {
     if (establishmentName == null && monthSelected == null) {
       onError("Establishment name  and  monthSelected is NOT selected");
       print("Establishment name  or  monthSelected is null");
@@ -121,45 +75,77 @@ class _TotalEarningsState extends State<TotalEarnings> {
       totalBalanceText = "$establishmentName earnings \non $monthSelected";
     });
 
-    print("Here is the total balance text $monthSelected");
-    print("Here is the establishment name $establishmentName");
+    debugPrint("Here is the total balance text $monthSelected");
+    debugPrint("Here is the establishment name $establishmentName");
 
     try {
       // Get the list of billings
-      List<Billing> billingListResponse = await widget.provider!
-          .getBillingByEstablishmentAndMonth(
-              establishmentName!, monthSelected!);
-
+      bloc.add(FetchBillingsByEstablishmentAndMonth(
+        stablismentName: establishmentName!,
+        filterValue: monthSelected!,
+      ));
+/* 
       final totalAmount = billingListResponse.fold(
           0.0, (previousValue, element) => previousValue + element.amount);
-      print("Here is the total amount with fold $totalAmount");
+      print("Here is the total amount with fold $totalAmount"); */
 
-      setState(() {
+/*       setState(() {
         totalEarningsPerMonthOrTotal = totalAmount;
-      });
+      }); */
 
-      print("Returning from filtering . . .");
+      debugPrint("Returning from filtering . . .");
       onComplete();
     } catch (e) {
-      print("Error fetching billings: $e");
+      debugPrint("Error fetching billings: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<BillingBloc, BillingState>(
+      builder: (context, state) {
+        if (state is FetchBillingLoaded) {
+          debugPrint("BillingLoaded in TotalEarnings");
+          totalEarningsPerMonthOrTotal = state.totalEarningsPerMonthOrTotal;
+          totalEarningsPerDay = state.totalEarningsPerDay;
+          return _totalEariningsContainer(context);
+        } else if (state is FilterCurrentMonthBillingsLoaded) {
+          debugPrint("FilterCurrentMonthBillingsLoaded in TotalEarnings");
+          totalEarningsPerMonthOrTotal = state.totalEarningsPerMonthOrTotal;
+          totalEarningsPerDay = state.totalEarningsPerDay;
+          return _totalEariningsContainer(context);
+        } else if (state is FetchBillingsByEstablishmentAndMonthLoaded) {
+          debugPrint("BillingsByEstablishmentAndMonthLoaded in TotalEarnings");
+          totalEarningsPerMonthOrTotal = state.totalEarningsPerMonthOrTotal;
+          return _totalEariningsContainer(context);
+        } else if (state is BillingsByDayLoaded) {
+          debugPrint("BillingsByEstablishmentAndMonthLoaded in TotalEarnings");
+          //totalEarningsPerMonthOrTotal = state.totalEarningsPerMonthOrTotal;
+
+          //debugPrint("Here is the total amount $totalEarningsPerMonthOrTotal");
+          //debugPrint("Here is the total amount $totalEarningsPerMonthOrTotal");
+
+          return _totalEariningsContainer(context);
+        } else if (state is BillingError) {
+          return Center(
+            child: Text("Error: ${state.message}"),
+          );
+        } else {
+          return Center(
+            child: Text("No data found (..)!"),
+          );
+        }
+      },
+    );
+  }
+
+//Total Earinings Containers
+  Container _totalEariningsContainer(BuildContext context) {
     return Container(
       height: 170,
       decoration: BoxDecoration(
         color: Colors.greenAccent.shade200.withOpacity(0.5),
         borderRadius: BorderRadius.circular(10),
-        /* boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 5,
-            blurRadius: 7,
-            offset: const Offset(0, 3),
-          ),
-        ], */
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
@@ -168,131 +154,139 @@ class _TotalEarningsState extends State<TotalEarnings> {
           mainAxisSize: MainAxisSize.min,
           children: [
             //Above row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    //Money icon
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.purpleAccent.shade100.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: customHorizontallMargin,
-                            vertical: customVerticalMargin),
-                        child: Center(
-                          child: Text(
-                            textAlign: TextAlign.center,
-                            "💰",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: "Poppins",
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+            _aboveRow(context),
+            //Space
+            const SizedBox(height: 20),
+            //Below Component
+            _bellowContent()
+          ],
+        ),
+      ),
+    );
+  }
 
-                    //Space
-                    const SizedBox(width: 20),
-
-                    //Total earnings per month
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "$totalEarningsPerMonthOrTotal THB",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: "Poppins",
-                          ),
-                        ),
-                        Text(
-                          totalBalanceText!,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w300,
-                            fontFamily: "Poppins",
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                //Filter per month
-                GestureDetector(
-                  onTap: () {
-                    establishmentName = null;
-                    monthSelected = 'Select the month';
-                    //Display the filter dialog
-                    _showModalBottomSheet(context);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.purpleAccent.shade100.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: customHorizontallMargin,
-                          vertical: customVerticalMargin),
-                      child: Center(
-                        child: Text(
-                          textAlign: TextAlign.center,
-                          "🔎",
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: "Poppins",
-                          ),
-                        ),
-                      ),
+//Above row
+  Row _aboveRow(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            //Money icon
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.purpleAccent.shade100.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: customHorizontallMargin,
+                    vertical: customVerticalMargin),
+                child: Center(
+                  child: Text(
+                    textAlign: TextAlign.center,
+                    "💰",
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: "Poppins",
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
 
             //Space
-            const SizedBox(height: 20),
+            const SizedBox(width: 20),
 
-            //Below Component
+            //Total earnings per month
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "$totalEarningsPerDay THB",
+                  "$totalEarningsPerMonthOrTotal THB",
                   style: TextStyle(
                     color: Colors.black,
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                     fontFamily: "Poppins",
                   ),
                 ),
                 Text(
-                  "Today total earnings",
+                  totalBalanceText!,
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 12,
                     fontWeight: FontWeight.w300,
                     fontFamily: "Poppins",
                   ),
-                )
+                ),
               ],
-            )
+            ),
           ],
         ),
-      ),
+
+        //Filter per month
+        GestureDetector(
+          onTap: () {
+            establishmentName = null;
+            monthSelected = 'Select the month';
+            //Display the filter dialog
+            _showModalBottomSheet(context);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.purpleAccent.shade100.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: customHorizontallMargin,
+                  vertical: customVerticalMargin),
+              child: Center(
+                child: Text(
+                  textAlign: TextAlign.center,
+                  "🔎",
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Poppins",
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+//Below content
+  Column _bellowContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "$totalEarningsPerDay THB",
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontFamily: "Poppins",
+          ),
+        ),
+        Text(
+          "Today total earnings",
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 12,
+            fontWeight: FontWeight.w300,
+            fontFamily: "Poppins",
+          ),
+        )
+      ],
     );
   }
 
@@ -303,7 +297,7 @@ class _TotalEarningsState extends State<TotalEarnings> {
         return StatefulBuilder(
           builder: (context, setState) {
             return SizedBox(
-              height: 310,
+              height: 300,
               width: double.infinity,
               child: Container(
                 //height: 310,
@@ -376,66 +370,104 @@ class _TotalEarningsState extends State<TotalEarnings> {
                       SizedBox(height: 10),
 
                       //Place
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                establishmentName = "Nawamim";
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: establishmentName == "Nawamim"
-                                    ? Border.all(
-                                        color: AppColors.lightBlueAccent,
-                                        width: 1.5,
-                                      )
-                                    : Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(4.0),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10.0, vertical: 15.0),
-                                child: Text(
-                                  "🏢 Nawamim",
-                                  style: TextStyle(
-                                    fontSize: 12,
+                      Padding(
+                        padding: const EdgeInsets.only(left: 35.0, right: 35.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  establishmentName = "All";
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: establishmentName == "All"
+                                      ? Border.all(
+                                          color: AppColors.lightBlueAccent,
+                                          width: 1.5,
+                                        )
+                                      : Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(4.0),
+                                ),
+                                child: SizedBox(
+                                  height: 40,
+                                  width: 70,
+                                  child: Center(
+                                    child: Text(
+                                      "All",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                establishmentName = "Night Market";
-                              });
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: establishmentName == "Night Market"
-                                    ? Border.all(
-                                        color: AppColors.lightBlueAccent,
-                                        width: 1.5,
-                                      )
-                                    : Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(4.0),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10.0, vertical: 15.0),
-                                child: Text(
-                                  "🏢 Night Market",
-                                  style: TextStyle(
-                                    fontSize: 12,
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  establishmentName = "Nawamim";
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: establishmentName == "Nawamim"
+                                      ? Border.all(
+                                          color: AppColors.lightBlueAccent,
+                                          width: 1.5,
+                                        )
+                                      : Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(4.0),
+                                ),
+                                child: SizedBox(
+                                  height: 40,
+                                  width: 70,
+                                  child: Center(
+                                    child: Text(
+                                      "Nawamim",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  establishmentName = "Night Market";
+                                });
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: establishmentName == "Night Market"
+                                      ? Border.all(
+                                          color: AppColors.lightBlueAccent,
+                                          width: 1.5,
+                                        )
+                                      : Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(4.0),
+                                ),
+                                child: SizedBox(
+                                  height: 40,
+                                  width: 79,
+                                  child: Center(
+                                    child: Text(
+                                      "Night Market",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
 
                       //Space
@@ -449,7 +481,7 @@ class _TotalEarningsState extends State<TotalEarnings> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.blackColor,
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w100,
                             fontFamily: 'Poppins',
                           ),
@@ -474,7 +506,7 @@ class _TotalEarningsState extends State<TotalEarnings> {
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 5.0, vertical: 2.0),
+                                      horizontal: 2.0, vertical: 2.0),
                                   child: DropdownButton(
                                     isExpanded: true,
                                     hint: Text(
@@ -524,8 +556,12 @@ class _TotalEarningsState extends State<TotalEarnings> {
                         alignment: Alignment.bottomRight,
                         child: GestureDetector(
                           onTap: () {
+                            final bloc = BlocProvider.of<BillingBloc>(context,
+                                listen: false);
+
                             //Filter the data
                             _updateTotalBalanceTextAndFilterData(
+                              bloc,
                               () {
                                 Navigator.of(context).pop();
                               },

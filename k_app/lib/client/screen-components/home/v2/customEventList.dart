@@ -1,22 +1,22 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:k_app/app_colors.dart';
 import 'package:k_app/client/screen-components/billing/snackBar/customSnackBar.dart';
 import 'package:k_app/client/screen-components/home/v2/customButton.dart';
 import 'package:k_app/client/screen-components/welcome/button.dart';
 import 'package:k_app/global.dart';
 import 'package:k_app/client/models/home/v2/event.dart';
+import 'package:k_app/server/database/bloc/appointmemt_bloc.dart';
+import 'package:k_app/server/database/bloc/events/appointment_events.dart';
+import 'package:k_app/server/database/bloc/states/appointment_state.dart';
 import 'package:k_app/server/models/appointment-model.dart';
 import 'package:k_app/server/models/billing-model.dart';
-import 'package:k_app/server/provider/app_provider.dart';
+import 'package:provider/provider.dart';
+//import 'package:k_app/server/provider/app_provider.dart';
 
 class CustomEventlist extends StatefulWidget {
-  final List<Appointment> events;
-  final AppProvider appProvider;
-  //final Map<DateTime, List<String>> events;
-  //final List<CalendarEvent> events;
-
-  CustomEventlist({super.key, required this.events, required this.appProvider});
+  const CustomEventlist({super.key});
 
   @override
   State<CustomEventlist> createState() => _CustomEventlistState();
@@ -37,14 +37,87 @@ class _CustomEventlistState extends State<CustomEventlist> {
 
   @override
   Widget build(BuildContext context) {
+    final AppointmentBloc appointmentBloc = context.read<AppointmentBloc>();
+
+    return BlocConsumer<AppointmentBloc, AppointmentState>(
+      builder: (context, state) {
+        if (state is AppointmentLoaded) {
+          //Get the list of appointments
+          final List<Appointment> appointments =
+              state.appointments.reversed.toList();
+
+          return _listContainer(appointments, appointmentBloc);
+        } else if (state is AppointmentFiltered) {
+          final List<Appointment> appointmentsFiltered =
+              state.filteredAppointments.reversed.toList();
+          return _listContainer(appointmentsFiltered, appointmentBloc);
+        } else if (state is AppointmentError) {
+          return Center(
+            child: Text(
+              state.message,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          );
+        } else {
+          return Center(
+            child: Text(
+              'Initial state',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          );
+        }
+      },
+      listener: (context, state) {
+        if (state is AppointmentDeleted) {
+          if (state.isDeleted) {
+            /* CustomSnackBar.show(
+              context,
+              title: 'Appointment',
+              message: "Appointment deleted 🚮",
+              contentType: ContentType.success,
+            ); */
+          } else {
+            CustomSnackBar.show(
+              context,
+              title: 'Appointment',
+              message: "Failed to delete appointment",
+              contentType: ContentType.failure,
+            );
+          }
+        } else if (state is AppointmentPaid) {
+          CustomSnackBar.show(
+            context,
+            title: 'Appointment',
+            message: "Appointment Paid ✅",
+            contentType: ContentType.success,
+          );
+        }
+      },
+    );
+  }
+
+//List of appointments
+  Container _listContainer(
+      List<Appointment> appointments, AppointmentBloc appointmentBloc) {
     return Container(
       height: 300, // I need to come up with something better that this
       color: AppColors.backgroundColor,
       child: ListView.builder(
         padding: EdgeInsets.zero,
-        itemCount: widget.events.length,
+        itemCount: appointments.length,
         itemBuilder: (context, index) {
-          Appointment event = widget.events[index];
+          //Get the appointment
+          Appointment appointment = appointments[index];
+
+          //debugPrint("Here is the appointment name ${appointment.userName}");
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Container(
@@ -59,7 +132,7 @@ class _CustomEventlistState extends State<CustomEventlist> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   //Left side
-                  _leftSide(event),
+                  _leftSide(appointment),
                   SizedBox(
                     width: 10,
                   ),
@@ -72,7 +145,7 @@ class _CustomEventlistState extends State<CustomEventlist> {
                     ),
                   ),
                   //Right side
-                  _rightSide(event, context, widget.appProvider),
+                  _rightSide(context, appointment, appointmentBloc),
                 ],
               ),
             ),
@@ -82,6 +155,7 @@ class _CustomEventlistState extends State<CustomEventlist> {
     );
   }
 
+//Left side
   Column _leftSide(Appointment event) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -124,8 +198,12 @@ class _CustomEventlistState extends State<CustomEventlist> {
     );
   }
 
+//Right side
   Expanded _rightSide(
-      Appointment event, BuildContext context, AppProvider appProvider) {
+    BuildContext context,
+    Appointment event,
+    AppointmentBloc appointmemtBloc,
+  ) {
     return Expanded(
       key: Key('appointmentInfo'),
       flex: 1,
@@ -189,7 +267,9 @@ class _CustomEventlistState extends State<CustomEventlist> {
                   //Delete the appointment
                   _showDeleteAppointmentDialog(event, () {
                     print("Event ID ${event.id!}");
-                    appProvider.deleteEventToObjexBox(event.id!);
+                    appointmemtBloc
+                        .add(DeleteAppointment(appointmentId: event.id!));
+                    //appProvider.deleteEventToObjexBox(event.id!);
                   });
                 },
               ),
@@ -205,11 +285,14 @@ class _CustomEventlistState extends State<CustomEventlist> {
                   _showPaymentDialog(
                     context,
                     event,
-                    appProvider,
-                    () {
+                    appointmemtBloc,
+                    //appProvider,
+                    /* () {
                       //Delete the appointment
-                      appProvider.deleteEventToObjexBox(event.id!);
-                    },
+                      appointmemtBloc
+                          .add(DeleteAppointment(appointmentId: event.id!));
+                      //appProvider.deleteEventToObjexBox(event.id!);
+                    }, */
                   );
                 },
               )
@@ -293,10 +376,15 @@ class _CustomEventlistState extends State<CustomEventlist> {
   }
 
 //Show payment dialog
-  void _showPaymentDialog(BuildContext context, Appointment event,
-      AppProvider appProvider, VoidCallback onDelete) {
+  void _showPaymentDialog(
+    BuildContext context,
+    Appointment event,
+    AppointmentBloc appointmemtBloc,
+    //VoidCallback onDelete,
+  ) {
     amountController.clear();
     amount = 0.0;
+    String? defauflValue = 'Payment';
     showDialog(
       context: context,
       builder: (context) {
@@ -305,7 +393,7 @@ class _CustomEventlistState extends State<CustomEventlist> {
             return AlertDialog(
               backgroundColor: AppColors.backgroundColor,
               title: Text(
-                "Payment",
+                "$amount THB",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -316,30 +404,6 @@ class _CustomEventlistState extends State<CustomEventlist> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  //Customer's name
-                  /*    Row(
-                    children: [
-                      Text(
-                        "Customer: ",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                      Text(
-                        event.userName,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-                    ],
-                  ), 
-                  SizedBox(
-                    height: 10,
-                  ),*/
                   //Enter the amount
                   Text(
                     "Enter the amount",
@@ -349,7 +413,6 @@ class _CustomEventlistState extends State<CustomEventlist> {
                       fontFamily: 'Poppins',
                     ),
                   ),
-
                   //Customer Ammount
                   Container(
                     padding:
@@ -466,34 +529,80 @@ class _CustomEventlistState extends State<CustomEventlist> {
                     GestureDetector(
                       onTap: isReadyToSave
                           ? () {
-                              setState(() {
-                                print("Amount: ${amount}");
-                                //Create a billing object
-                                Billing billing = Billing(
-                                  appointmentID: event.id!,
-                                  customerName: event.userName,
-                                  appointmentDate: event.appointmentDate,
-                                  appointmentTime: event.appointmentTime,
-                                  amount: amount ?? 0.0,
-                                  establismentName: event.establishmentName,
-                                );
-
-                                //Add the billing to the list
-                                if (amount != 0.0) {
-                                  appProvider.addBilling(billing);
-                                  //Show a snackbar
-                                  CustomSnackBar.show(
-                                    context,
-                                    title: 'Payment',
-                                    message: "Payment successful",
+                              setState(
+                                () {
+                                  debugPrint("Amount: ${amount}");
+                                  //Create a billing object
+                                  Billing billing = Billing(
+                                    appointmentID: event.id!,
+                                    customerName: event.userName,
+                                    appointmentDate: event.appointmentDate,
+                                    appointmentTime: event.appointmentTime,
+                                    amount: amount ?? 0.0,
+                                    establismentName: event.establishmentName,
                                   );
-                                }
 
-                                //And delete it from the appointment list
-                                onDelete();
-                              });
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                            "คุณแน่ใจว่าต้องการชำระเงินนี้หรือไม่?",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: "Poppins",
+                                            )),
+                                        content: Text(
+                                          "$amount THB",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: "Poppins",
+                                          ),
+                                        ),
+                                        actions: [
+                                          CustomButton2(
+                                            btnTitle: "Cancel",
+                                            //textIcon: "🗑️",
+                                            width: 10,
+                                            height: 10,
+                                            fontSize: 16,
+                                            backgroungColor: AppColors.textColor
+                                                .withOpacity(0.7),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          CustomButton2(
+                                            btnTitle: "Save",
+                                            //textIcon: "💵",
+                                            fontSize: 16,
+                                            width: 10,
+                                            height: 10,
+                                            backgroungColor: AppColors
+                                                .greenAccent
+                                                .withOpacity(0.8),
+                                            onPressed: () {
+                                              //Make payment
+                                              appointmemtBloc
+                                                  .add(MakePayement(billing));
+                                              // to exit the current dialog
+                                              Navigator.of(context).pop();
+                                              //to exit the previous dialog
+                                              _onSavePressed(context);
+                                            },
+                                          )
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              );
 
-                              Navigator.of(context).pop();
+                              //Navigator.of(context).pop();
                             }
                           : null,
                       child: Container(
@@ -517,100 +626,6 @@ class _CustomEventlistState extends State<CustomEventlist> {
                     ),
                   ],
                 )
-
-                /*    TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text(
-                    "Cancel",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Poppins',
-                      color: AppColors.blackColor,
-                    ),
-                  ),
-                ),
- */
-/*                 TextButton(
-                  onPressed: isReadyToSave
-                      ? () {
-                          setState(
-                            () {
-                              /* if (amountController.text.isEmpty) {
-                                CustomSnackBar.show(
-                                  context,
-                                  title: 'Payment',
-                                  message: "Please enter the amount",
-                                  contentType: ContentType.failure,
-                                );
-                                return;
-                              }
-
-                              try {
-                                amount = double.parse(amountController.text);
-                              } catch (e) {
-                                CustomSnackBar.show(
-                                  context,
-                                  title: 'Payment',
-                                  message: "Please enter a valid number",
-                                  contentType: ContentType.failure,
-                                );
-                                return;
-                              }
-
-                              if (amount == 0.0 || amount == null) {
-                                CustomSnackBar.show(
-                                  context,
-                                  title: 'Payment',
-                                  message:
-                                      "Please enter an amount greater than zero",
-                                  contentType: ContentType.failure,
-                                );
-                                return;
-                              }
- */
-
-                              print("Amount: ${amount}");
-                              //Create a billing object
-                              Billing billing = Billing(
-                                appointmentID: event.id!,
-                                customerName: event.userName,
-                                appointmentDate: event.appointmentDate,
-                                appointmentTime: event.appointmentTime,
-                                amount: amount ?? 0.0,
-                                establismentName: event.establishmentName,
-                              );
-
-                              //Add the billing to the list
-                              if (amount != 0.0) {
-                                appProvider.addBilling(billing);
-                                //Show a snackbar
-                                CustomSnackBar.show(
-                                  context,
-                                  title: 'Payment',
-                                  message: "Payment successful",
-                                );
-                              }
-
-                              //And delete it from the appointment list
-                              onDelete();
-                            },
-                          );
-                          Navigator.of(context).pop();
-                        }
-                      : null,
-                  child: Text(
-                    "Save",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Poppins',
-                      color: isReadyToSave ? AppColors.blackColor : Colors.grey,
-                    ),
-                  ),
-                ), */
               ],
             );
           },
@@ -681,4 +696,8 @@ class _CustomEventlistState extends State<CustomEventlist> {
       },
     );
   }
+}
+
+void _onSavePressed(BuildContext context) {
+  Navigator.of(context).pop();
 }

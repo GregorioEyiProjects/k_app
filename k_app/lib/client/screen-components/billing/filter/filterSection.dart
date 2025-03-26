@@ -1,28 +1,36 @@
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:k_app/app_colors.dart';
+import 'package:k_app/server/database/bloc/billing_bloc.dart';
 
 class FilterSection extends StatefulWidget {
   //final VoidCallback? onTap;
   final ValueChanged<String>? onTapped;
   final bool? isFilteredFromThePreviousScreen;
+  final String? hintText;
 
-  const FilterSection(
-      {super.key, this.onTapped, this.isFilteredFromThePreviousScreen});
+  const FilterSection({
+    super.key,
+    this.onTapped,
+    this.isFilteredFromThePreviousScreen,
+    this.hintText,
+  });
 
   @override
   State<FilterSection> createState() => _FilterSectionState();
 }
 
 class _FilterSectionState extends State<FilterSection> {
-  String? hintText;
+  String? _hintText;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    hintText = 'Filter';
+    _hintText = widget.hintText ?? 'Filter';
+    debugPrint('Hint Text in FilterSection...: $_hintText');
   }
 
   @override
@@ -36,36 +44,36 @@ class _FilterSectionState extends State<FilterSection> {
                 case 1:
                   //print('Today');
                   setState(() {
-                    hintText = 'Today';
-                    widget.onTapped!(hintText!);
+                    _hintText = 'Today';
+                    widget.onTapped!(_hintText!);
                   });
                   break;
                 case 2:
                   //print('Yesterday');
                   setState(() {
-                    hintText = 'Yesterday';
-                    widget.onTapped!(hintText!);
+                    _hintText = 'Yesterday';
+                    widget.onTapped!(_hintText!);
                   });
                   break;
                 case 3:
                   //print('Last 7 days');
                   setState(() {
-                    hintText = 'Last 7 days';
-                    widget.onTapped!(hintText!);
+                    _hintText = 'Last 7 days';
+                    widget.onTapped!(_hintText!);
                   });
                   break;
 
                 case 4:
                   //print('Last 30 days');
                   setState(() {
-                    hintText = 'Last 30 days';
-                    widget.onTapped!(hintText!);
+                    _hintText = 'Last 30 days';
+                    widget.onTapped!(_hintText!);
                   });
                   break;
               }
             },
       hint: Text(
-        hintText!,
+        _hintText!,
         style: TextStyle(
           fontSize: 16,
           color: AppColors.blackColor.withOpacity(0.6),

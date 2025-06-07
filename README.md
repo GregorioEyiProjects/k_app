@@ -39,11 +39,8 @@ A Flutter application for appointment booking and billing management.
    ```sh
    flutter pub run build_runner build
    ```
-
-4. **Configure Supabase:**
-   - Update your Supabase credentials in [`lib/server/database/supabase.dart`](lib/server/database/supabase.dart).
-
-5. **Run the app:**
+   
+4. **Run the app:**
    ```sh
    flutter run
    ```

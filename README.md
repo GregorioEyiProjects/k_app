@@ -80,6 +80,8 @@ A Flutter application for appointment booking and billing management.
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-## License
 
-[MIT](LICENSE)
+## Author
+
+Gregorio Eyi (GP) 
+

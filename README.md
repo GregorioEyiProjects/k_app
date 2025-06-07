@@ -76,11 +76,6 @@ A Flutter application for appointment booking and billing management.
   flutter build web   # Web
   ```
 
-- **Run tests:**
-  ```sh
-  flutter test
-  ```
-
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

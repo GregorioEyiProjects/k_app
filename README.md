@@ -1,6 +1,9 @@
-# K App
+# Kh App
 
 A Flutter application for appointment booking and billing management.
+
+## Kh app
+![Home page](./screenshots/airbnb.jpeg)
 
 ## Features
 

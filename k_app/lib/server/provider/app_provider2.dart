@@ -107,9 +107,9 @@ class AppProvider with ChangeNotifier {
   }
 
   //Get all billings by Establishment name and Month
-  Future<List<Billing>> getBillingByEstablishmentAndMonth(
+  Future<Map<String, dynamic>> getBillingByEstablishmentAndMonth(
       String establishmentName, String month) {
-    print(
+    debugPrint(
         'Passing from getBillingByEstablishmentAndMonth in the PROVIDER . . . ');
     //print('Establishment Name: $establishmentName');
     //print('Month: $month');
@@ -119,7 +119,7 @@ class AppProvider with ChangeNotifier {
   }
 
   // Get getCurrentMonthBillings
-  Future<List<Billing>> getCurrentMonthBillings() {
+  Future<Map<String, dynamic>> getCurrentMonthBillings() {
     final response = objectBox.billingRepo.getCurrentMonthBillingsInDB();
     return response;
   }

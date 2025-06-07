@@ -7,6 +7,8 @@ import 'package:k_app/client/screen-components/billing/snackBar/customSnackBar.d
 import 'package:k_app/client/screen-components/home/v2/customButton.dart';
 
 import 'package:k_app/global.dart';
+import 'package:k_app/server/database/bloc/billing_bloc.dart';
+import 'package:k_app/server/database/bloc/events/billing_events.dart';
 import 'package:k_app/server/models/billing-model.dart';
 //import 'package:k_app/server/provider/app_provider.dart';
 import 'package:provider/provider.dart';
@@ -88,6 +90,7 @@ class _BillingListState extends State<BillingList> {
     );
  */
 
+//Get the result of the menu
     final result = await showMenu(
       context: context,
       menuPadding: EdgeInsets.symmetric(horizontal: 30, vertical: 25),
@@ -226,15 +229,21 @@ class _BillingListState extends State<BillingList> {
                   onPressed: () async {
                     debugPrint("Delete on id .... $id");
                     // bool wasItRemove = await appProvider.deleteBilling(id);
-                    bool wasItRemove = true;
-                    if (wasItRemove) {
+
+                    //Delete the billing
+                    context
+                        .read<BillingBloc>()
+                        .add(DeleteBilling(billingId: id));
+
+                    // bool wasItRemove = true;
+                    /*if (wasItRemove) {
                       //Show a snackbar
                       CustomSnackBar.show(
                         context,
                         title: "Success",
                         message: "Billing was delete",
                       );
-                    } /* else {
+                    }  else {
                         //Show a snackbar
                         CustomSnackBar.show(
                           context,
@@ -251,6 +260,19 @@ class _BillingListState extends State<BillingList> {
         );
       },
     );
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.billingList.isNotEmpty) {
+        debugPrint(
+            "BillingList length in the BillingList >>>: ${widget.billingList.length}");
+      }
+    });
   }
 
   @override

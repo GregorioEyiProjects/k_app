@@ -2,11 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:k_app/main.dart';
 import 'package:k_app/server/database/bloc/events/appointment_events.dart';
 import 'package:k_app/server/database/bloc/states/appointment_state.dart';
 import 'package:k_app/server/database/objectBox.dart';
 import 'package:k_app/server/models/appointment-model.dart';
 import 'package:k_app/server/models/billing-model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /* import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +49,20 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         emit(AppointmentLoading());
 
         try {
+          //Adding an appointment into the supabase
+          /* final List<Map<String, dynamic>> subabaseResponse =
+              await supabase.from('appointment').insert([
+            {
+              'userName': '${event.appointment.userName}',
+              'appointmentDate': '${event.appointment.appointmentDate}',
+              'appointmentTime': '${event.appointment.appointmentTime}',
+              'establishmentName': '${event.appointment.establishmentName}'
+            }
+          ]).select();
+
+          debugPrint(
+              "Here is the response in AddAppointment $subabaseResponse"); */
+
           //Add the appointment
           final Appointment appointmentAdded =
               await objectBox.appointmentRepo.addAppointment(event.appointment);

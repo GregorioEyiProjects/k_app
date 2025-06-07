@@ -1,0 +1,3 @@
+final String anonKey =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kdmpuaWxtYndramhud2hybmpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5MDE0MDksImV4cCI6MjA2MTQ3NzQwOX0.a5UlIbSdpM9yIjcSQvbA3vW8jni-fi6k2odEb-7k08Y";
+final String projectURL = "https://ndvjnilmbwkjhnwhrnjn.supabase.co";

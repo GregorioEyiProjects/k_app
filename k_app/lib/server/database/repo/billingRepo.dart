@@ -73,13 +73,67 @@ class BillingRepo {
     final filteredBillingList = query.find();
 
     if (filteredBillingList.isEmpty) {
-      print('No data found');
+      debugPrint('No billings FOUND for today.');
       return [];
     }
 
-    debugPrint('Done searching. Now returning . . . ');
-
+    debugPrint('Billings FOUND for today. Now returning . . . ');
     return filteredBillingList;
+  }
+
+  // Get getCurrentMonthBillings
+  Future<Map<String, dynamic>> getCurrentMonthBillingsInDB() async {
+    debugPrint('Getting current month billings in DB . . . ');
+
+    // Get the current month and year
+    final DateTime now = DateTime.now();
+    final int currentMonth = now.month;
+    final int currentYear = now.year;
+
+    // Create the start and end dates for the query
+    DateTime startDate = DateTime(currentYear, currentMonth, 1);
+    DateTime endDate =
+        DateTime(currentYear, currentMonth + 1, 1).subtract(Duration(days: 1));
+
+    //Query
+    final query = _billingBox
+        .query(Billing_.appointmentDate.between(
+            startDate.millisecondsSinceEpoch, endDate.millisecondsSinceEpoch))
+        .build();
+
+    // Get the list
+    final filteredBillingList = query.find();
+
+    if (filteredBillingList.isEmpty) {
+      debugPrint('No billings FOUND for this month. Now returning . . . ');
+      final errorData = {
+        'status': 'error',
+        'message': 'No billings FOUND for this month.',
+        'data': [],
+      };
+      return errorData;
+    }
+
+    if (filteredBillingList.isEmpty) {
+      debugPrint('No billings FOUND for this month. Now returning . . . ');
+      final errorData = {
+        'status': 'error',
+        'message': 'No billings FOUND for this month.',
+        'data': [],
+      };
+
+      return errorData;
+    }
+
+    //ELSE ...
+    final successData = {
+      'status': 'success',
+      'message': 'Billings FOUND for this month.',
+      'data': filteredBillingList,
+    };
+
+    debugPrint('Billings FOUND for this month. Now returning . . . ');
+    return successData;
   }
 
   //Get all  billings by Establishment name
@@ -97,79 +151,119 @@ class BillingRepo {
   }
 
   //Get all billings by Establishment name and Month
-  Future<List<Billing>> getAllBillingsByEstablishmentAndMonth(
+  Future<Map<String, dynamic>> getAllBillingsByEstablishmentAndMonth(
       String establishmentName, String month) async {
-    print('Filtering data . . . ');
+    debugPrint('Filtering data . . . ');
     int monthNumber = 0;
+    bool isAll = month == 'All' ? true : false;
 
     switch (month) {
       case 'January':
         monthNumber = 1;
-
         break;
       case 'February':
         monthNumber = 2;
-
         break;
       case 'March':
         monthNumber = 3;
-
         break;
       case 'April':
         monthNumber = 4;
-
         break;
       case 'May':
         monthNumber = 5;
-
         break;
       case 'June':
         monthNumber = 6;
-
         break;
       case 'July':
         monthNumber = 7;
-
         break;
       case 'August':
         monthNumber = 8;
-
         break;
       case 'September':
         monthNumber = 9;
-
         break;
       case 'October':
         monthNumber = 10;
-
         break;
       case 'November':
         monthNumber = 11;
-
         break;
       case 'December':
         monthNumber = 12;
-
         break;
       default:
         monthNumber = 0;
     }
 
-    //Return the whole list if the month is not selected
-    if (monthNumber == 0) {
-      return [];
+    //Check if the month is not selected
+    if (monthNumber == 0 && !isAll) {
+      debugPrint('No month was selected');
+      final data = {
+        'status': 'error',
+        'message': 'No month was selected',
+        'data': [],
+      };
+      return data;
     }
+
+    debugPrint('Month Number >>> : $monthNumber');
+    debugPrint('Establishment Name >>> : $establishmentName');
+
+    //Default list
+    List<Billing> filteredBillingList = [];
 
     // Get the current year
     final int currentYear = DateTime.now().year;
 
     // Create the start and end dates for the query
-
     DateTime startDate = DateTime(currentYear, monthNumber, 1);
-    DateTime endDate =
-        DateTime(currentYear, monthNumber + 1, 1).subtract(Duration(days: 1));
-    debugPrint('Start Date >>> : $startDate');
-    debugPrint('End Date >>> : $endDate');
+    DateTime endDate = DateTime(currentYear, monthNumber + 1, 1).subtract(Duration(
+        milliseconds:
+            1)); //it was days: 1 and it was giving me '<<< End Date  >>> : 2025-03-31 00:00:00.000'
+
+    debugPrint(' <<< End Date  >>> : $endDate');
+
+    if (establishmentName == 'All') {
+      debugPrint('All was selectd . . .');
+
+      //Query
+      final query = _billingBox
+          .query(
+            Billing_.appointmentDate.between(startDate.millisecondsSinceEpoch,
+                endDate.millisecondsSinceEpoch),
+          )
+          .build();
+      // Get the list
+      filteredBillingList = query.find();
+
+      //Check if the list is empty
+      if (filteredBillingList.isEmpty) {
+        debugPrint('No billings FOUND for this month. Now returning . . . ');
+
+        final data = {
+          'status': 'error',
+          'message': 'No billings FOUND for this month.',
+          'data': [],
+        };
+        return data;
+      }
+
+      //ELSE ...
+      final responsData = {
+        'status': 'success',
+        'message': 'Billings FOUND for this month.',
+        'data': filteredBillingList,
+      };
+
+      debugPrint(
+          'Filtered list length >>> : ${(responsData['data'] as List<Billing>).length}');
+      return responsData;
+    }
+
+    // ---- If establishmentName is not All ----
 
     //Query
     final query = _billingBox
@@ -182,33 +276,29 @@ class BillingRepo {
         )
         .build();
     // Get the list
-    final filteredBillingList = query.find();
+    filteredBillingList = query.find();
 
-    return filteredBillingList;
-  }
+    if (filteredBillingList.isEmpty) {
+      debugPrint('No billings FOUND for this month. Now returning . . . ');
 
-  // Get getCurrentMonthBillings
-  Future<List<Billing>> getCurrentMonthBillingsInDB() async {
-    // Get the current month
-    final int currentMonth = DateTime.now().month;
+      final data = {
+        'status': 'error',
+        'message': 'No billings FOUND for this month.',
+        'data': [],
+      };
+      return data;
+    }
 
-    // Get the current year
-    final int currentYear = DateTime.now().year;
+    //ELSE ...
+    final responsData = {
+      'status': 'success',
+      'message': 'Billings FOUND for this month.',
+      'data': filteredBillingList,
+    };
 
-    // Create the start and end dates for the query
-    DateTime startDate = DateTime(currentYear, currentMonth, 1);
-    DateTime endDate =
-        DateTime(currentYear, currentMonth + 1, 1).subtract(Duration(days: 1));
+    debugPrint(
+        'Filtered list length >>> : ${(responsData['data'] as List<Billing>).length}');
 
-    //Query
-    final query = _billingBox
-        .query(Billing_.appointmentDate.between(
-            startDate.millisecondsSinceEpoch, endDate.millisecondsSinceEpoch))
-        .build();
-
-    // Get the list
-    final filteredBillingList = query.find();
-
-    return filteredBillingList;
+    return responsData;
   }
 }

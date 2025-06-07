@@ -78,9 +78,12 @@ Route<dynamic> generateRoute(RouteSettings settings) {
             args['isFilteredFromThePreviousScreen'] as bool;
         final List<Billing>? billingListToDisplay =
             args['billingList'] as List<Billing>?;
+        final List<Billing>? alllBillingListForThisMonth =
+            args['alllBillingListForThisMonth'] as List<Billing>?;
 
         if (billingListToDisplay != null) {
-          debugPrint("billingListToDisplay IS NOT null in /seeAllBilling");
+          debugPrint(
+              'billingListToDisplay is not null in ROUTER, and the  Length of billingListToDisplay is: ${billingListToDisplay.length}');
           return BlocProvider.value(
             value: billingBloc,
             child: SeeAllBillling(
@@ -91,8 +94,23 @@ Route<dynamic> generateRoute(RouteSettings settings) {
           );
         }
 
+        if (alllBillingListForThisMonth != null) {
+          debugPrint(
+              'alllBillingListForThisMonth is not null in ROUTER, and the Length of alllBillingListForThisMonth is: ${alllBillingListForThisMonth.length}');
+
+          return BlocProvider.value(
+            value: billingBloc,
+            child: SeeAllBillling(
+              filterName: filterName,
+              isFilteredFromThePreviousScreen: isFilteredFromThePreviousScreen,
+              alllBillingListForThisMonth: alllBillingListForThisMonth,
+            ),
+          );
+        }
+
         //ELSE ...
-        debugPrint("billingListToDisplay IS NULL in /seeAllBilling");
+        debugPrint(
+            "billingListToDisplay and alllBillingListForThisMonth Are NULL, so displaying the curent month billings");
         return BlocProvider.value(
           value: billingBloc,
           child: SeeAllBillling(

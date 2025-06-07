@@ -22,42 +22,23 @@ class BillingBloc extends Bloc<BillingEvents, BillingState> {
       //Get all Billings
       try {
         //Get the billings
-        final List<Billing> response =
-            await objectBox.billingRepo.getBillings();
-        debugPrint("Here is the response in FetchAppointments $response");
+        Map<String, dynamic> response =
+            await getTheUpdatedBillingsList(objectBox);
 
-        if (response.isEmpty) {
+        if (response["billingsLoaded"].isEmpty) {
           emit(BillingError(message: 'No billings found'));
           return;
         }
 
         //ELSE ...
 
-        //Now get the total earnings for the current month and day
-        final currentDayAndMonthBillings =
-            await getCurrentDayAndMonthBillings();
-
-        if (currentDayAndMonthBillings["totalEarningsPerDay"] == 0.0 &&
-            currentDayAndMonthBillings["totalEarningsInMonth"] == 0.0) {
-          emit(BillingError(message: 'No billings found'));
-          return;
-        }
-
-        //Extract the value
-        final totalEarningsPerDay =
-            currentDayAndMonthBillings["totalEarningsPerDay"];
-        final totalEarningsPerMonthOrTotal =
-            currentDayAndMonthBillings["totalEarningsInMonth"];
-        //debugPrint("Here is the total earnings per day after getting it with getCurrentDayAndMonthBillings  $totalEarningsPerDay");
-        //debugPrint("Here is the total earnings per month after getting it with getCurrentDayAndMonthBillings $totalEarningsPerMonthOrTotal");
-
         //Emit the loaded state
         emit(FetchBillingLoaded(
-          billingsLoaded: response,
-          totalEarningsPerMonthOrTotal: totalEarningsPerMonthOrTotal,
-          totalEarningsPerDay: totalEarningsPerDay,
+          billingsLoaded: response["billingsLoaded"],
+          totalEarningsPerMonthOrTotal: response["totalEarningsInMonth"],
+          totalEarningsPerDay: response["totalEarningsPerDay"],
           selectedDateText: "Filter",
-          originalCachedBillings: response,
+          originalCachedBillings: response["billingsLoaded"],
         ));
         debugPrint("Data was emitted in FetchBillings");
       } catch (e) {
@@ -122,7 +103,60 @@ class BillingBloc extends Bloc<BillingEvents, BillingState> {
     });
 
     //Delete a billing
-    on<DeleteBilling>((event, emit) {});
+    on<DeleteBilling>((event, emit) async {
+      debugPrint("Now using the DeleteBilling in Bloc");
+
+      //Emit the loading state
+      emit(BillingLoading());
+
+      try {
+        //
+        final bool billingResponse =
+            await objectBox.billingRepo.deleteBilling(event.billingId);
+        debugPrint("Here is the billingResponse $billingResponse");
+
+        if (!billingResponse) {
+          emit(BillingError(message: 'Billing not found'));
+          return;
+        }
+
+        //ELSE ...
+
+        //Emit
+        emit(BillingDeleted(isDeleted: billingResponse));
+
+        //Fetch the data again to get the updated list
+        //final updatedBillings = await objectBox.billingRepo.getBillings();
+        //Now get the total earnings for the current month and day
+        //final currentDayAndMonthBillings = await getCurrentDayAndMonthBillings();
+
+        //Emit the loading state
+        emit(BillingLoading());
+
+        //Get all Billings
+        Map<String, dynamic> response =
+            await getTheUpdatedBillingsList(objectBox);
+
+        if (response["billingsLoaded"].isEmpty) {
+          emit(BillingError(message: 'No billings found'));
+          return;
+        }
+
+        //ELSE ...
+
+        //Emit the loaded state
+        emit(FetchBillingLoaded(
+          billingsLoaded: response["billingsLoaded"],
+          totalEarningsPerMonthOrTotal: response["totalEarningsInMonth"],
+          totalEarningsPerDay: response["totalEarningsPerDay"],
+          selectedDateText: "Filter",
+          originalCachedBillings: response["billingsLoaded"],
+        ));
+        debugPrint("Data was emitted in FetchBillings");
+      } catch (e) {
+        emit(BillingError(message: e.toString()));
+      }
+    });
 
     //Filter the billings by establishment name
     on<FetchBillingsByEstablishmentAndMonth>((event, emit) async {
@@ -133,45 +167,44 @@ class BillingBloc extends Bloc<BillingEvents, BillingState> {
       debugPrint("Here is the... value to filter name ${event.filterValue}");
 
       try {
-        if (event.stablismentName == "All") {
-          // Fetch all billings
-          add(FetchBillings());
-          // Fetch the current day and month billing amount
-          //add(FetchCurrentDayAndMonthBillings());
-        } else {
-          // Handle specific establishment filtering
-          final List<Billing> response =
-              await objectBox.billingRepo.getAllBillingsByEstablishmentAndMonth(
-            event.stablismentName,
-            event.filterValue,
-          );
+        final Map<String, dynamic> response =
+            await objectBox.billingRepo.getAllBillingsByEstablishmentAndMonth(
+          event.stablismentName,
+          event.filterValue,
+        );
 
+        //debugPrint("<<< Here is the response in FetchBillingsByEstablishmentAndMonth >>>> ${response['data']}");
+
+        /* for (var element in response['data']) {
+          debugPrint("Here is the element ${element.toString()}");
           debugPrint(
-              "Here is the response in FetchBillingsByEstablishmentAndMonth $response");
+              "<<<<<Here is the element amount>>>> ${element.amount} andf the date is ${element.appointmentDate}");
+        } */
 
-          if (response.isEmpty) {
-            emit(BillingError(message: 'No billings found'));
-            return;
-          }
+        //debugPrint("Here is the response in FetchBillingsByEstablishmentAndMonth $response");
 
-          //ELSE ...
-
-          //Get the total earnings for the current month or total
-          final totalEarningsPerMonthOrTotal =
-              response.fold(0.0, (prev, element) => prev + element.amount);
-
-          emit(BillingLoading()); // Emit a temporary loading state
-
-          emit(
-            FetchBillingsByEstablishmentAndMonthLoaded(
-              billingsFound: response,
-              // timestamp: DateTime.now(),
-              totalEarningsPerMonthOrTotal: totalEarningsPerMonthOrTotal,
-            ),
-          );
-          debugPrint(
-              "Data was emitted in FetchBillingsByEstablishmentAndMonth");
+        if (response['status'] == 'error') {
+          emit(BillingError(message: 'No billings found'));
+          return;
         }
+
+        //ELSE ...
+
+        //Get the total earnings for the current month or total
+        final totalEarningsPerMonthOrTotal = response['data']
+            .fold(0.0, (prev, element) => prev + element.amount);
+
+        emit(BillingLoading()); // Emit a temporary loading state
+
+        emit(
+          FetchBillingsByEstablishmentAndMonthLoaded(
+            billingsFound: response['data'],
+            // timestamp: DateTime.now(),
+            totalEarningsPerMonthOrTotal: totalEarningsPerMonthOrTotal,
+          ),
+        );
+        debugPrint("Data was emitted in FetchBillingsByEstablishmentAndMonth");
+        //}
       } catch (e) {
         emit(BillingError(message: e.toString()));
       }
@@ -213,7 +246,7 @@ class BillingBloc extends Bloc<BillingEvents, BillingState> {
         debugPrint("Here is the total amount for today $totalEarningsPerDay");
 
         //Get the total earnings for the current Month
-        final List<Billing> response =
+        final Map<String, dynamic> response =
             await objectBox.billingRepo.getCurrentMonthBillingsInDB();
 
         if (response.isEmpty) {
@@ -223,17 +256,10 @@ class BillingBloc extends Bloc<BillingEvents, BillingState> {
         //ELSE ...
 
         //Get the total earnings in the current month
-        final totalEarningsInMonth = response.fold(
+        final totalEarningsInMonth = response['data'].fold(
             0.0, (previousValue, element) => previousValue + element.amount);
         debugPrint(
             "Here is the total earnings in the current month $totalEarningsInMonth");
-
-        // Get the original list of billings
-        // final currentState = state as BillingLoaded;
-        //final cachedBillings = currentState.originalCachedBillings;
-
-        //debugPrint("CurrentState.totalEarningsPerDay in FetchCurrentDayAndMonthBillings ${currentState.totalEarningsPerDay}");
-        //debugPrint("CurrentState.totalEarningsPerMonthOrTotal FetchCurrentDayAndMonthBillings ${currentState.totalEarningsPerMonthOrTotal}");
 
         // ----------- Emit the loaded state  ----------- //
         emit(
@@ -334,7 +360,63 @@ class BillingBloc extends Bloc<BillingEvents, BillingState> {
     });
   }
 
+// ------ ------ Methods ------ ------ //
+  Future<Map<String, dynamic>> getTheUpdatedBillingsList(
+    ObjectBox objectBox,
+  ) async {
+    //
+    //final List<Billing> listOfBillingsFound =await objectBox.billingRepo.getBillings();
+    final Map<String, dynamic> listOfBillingsFound =
+        await objectBox.billingRepo.getCurrentMonthBillingsInDB();
+    debugPrint(
+        "Here is the response in FetchAppointments $listOfBillingsFound");
+
+    if (listOfBillingsFound['status'] == 'error') {
+      //emit(BillingError(message: 'No billings found'));
+      return {
+        "totalEarningsPerDay": 0.0,
+        "totalEarningsInMonth": 0.0,
+        "billingsLoaded": listOfBillingsFound['data']
+      };
+    }
+
+    //ELSE ...
+
+    //Now get the total earnings for the current month and day
+    final currentDayAndMonthBillings = await getCurrentDayAndMonthBillings();
+
+    if (currentDayAndMonthBillings["totalEarningsPerDay"] == 0.0 &&
+        currentDayAndMonthBillings["totalEarningsInMonth"] == 0.0) {
+      debugPrint("Both are  0.0");
+      return {
+        "totalEarningsPerDay": 0.0,
+        "totalEarningsInMonth": 0.0,
+        "billingsLoaded": listOfBillingsFound['data']
+      };
+    }
+
+    //Extract the value
+    final totalEarningsPerDay =
+        currentDayAndMonthBillings["totalEarningsPerDay"];
+    final totalEarningsPerMonthOrTotal =
+        currentDayAndMonthBillings["totalEarningsInMonth"];
+    debugPrint(
+        "Here is the total earnings per day after getting it with getCurrentDayAndMonthBillings  $totalEarningsPerDay");
+    debugPrint(
+        "Here is the total earnings per month after getting it with getCurrentDayAndMonthBillings $totalEarningsPerMonthOrTotal");
+
+    return {
+      "totalEarningsPerDay": totalEarningsPerDay,
+      "totalEarningsInMonth": totalEarningsPerMonthOrTotal,
+      "billingsLoaded": listOfBillingsFound['data']
+    };
+  }
+
+//Get the total earnings for the current day and month
   Future<Map<String, dynamic>> getCurrentDayAndMonthBillings() async {
+    debugPrint("Now using the getCurrentDayAndMonthBillings method");
+
+    //
     DateTime now = DateTime.now();
     DateTime startTime = DateTime(now.year, now.month, now.day);
     DateTime endTime = DateTime(now.year, now.month, now.day, 23, 59, 59);
@@ -345,17 +427,22 @@ class BillingBloc extends Bloc<BillingEvents, BillingState> {
     final todalTodayAmountResponse =
         await objectBox.billingRepo.getBillingListByDate(startTime, endTime);
 
+    debugPrint(
+        "Here is the response in getCurrentDayAndMonthBillings $todalTodayAmountResponse");
+
     //Check if the response is empty
     if (todalTodayAmountResponse.isEmpty) {
+      debugPrint(
+          "No billings found for today. \nSo now searching for the current month");
       //emit(BillingError(message: 'No billings found'));
-      return {"totalEarningsPerDay": 0.0, "totalEarningsInMonth": 0.0};
+      //return {"totalEarningsPerDay": 0.0, "totalEarningsInMonth": 0.0};
     }
 
     //ELSE ...
     //Output the total amount for today
-    for (Billing billing in todalTodayAmountResponse) {
+    /*  for (Billing billing in todalTodayAmountResponse) {
       debugPrint("Here is the billing amount ${billing.amount}");
-    }
+    } */
 
     // -------- Get the total amount for today ---------  //
     final totalEarningsPerDay = todalTodayAmountResponse.fold(
@@ -363,18 +450,19 @@ class BillingBloc extends Bloc<BillingEvents, BillingState> {
     debugPrint("Here is the total amount for today $totalEarningsPerDay");
 
     //Get the total earnings for the current Month
-    final List<Billing> response =
+    final Map<String, dynamic> response =
         await objectBox.billingRepo.getCurrentMonthBillingsInDB();
 
-    if (response.isEmpty) {
+    if (response['status'] == 'error') {
       //emit(BillingError(message: 'No billings found'));
       return {"totalEarningsPerDay": 0.0, "totalEarningsInMonth": 0.0};
     }
     //ELSE ...
+    debugPrint("Here is the response in getCurrentMonthBillingsInDB $response");
 
     //Get the total earnings in the current month
-    final totalEarningsInMonth = response.fold(
-        0.0, (previousValue, element) => previousValue + element.amount);
+    final totalEarningsInMonth = response['data']
+        .fold(0.0, (previousValue, element) => previousValue + element.amount);
     debugPrint(
         "Here is the total earnings in the current month $totalEarningsInMonth");
 

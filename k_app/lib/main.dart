@@ -8,14 +8,19 @@ import 'package:k_app/client/screens/welcome.dart';
 import 'package:k_app/server/database/bloc/appointmemt_bloc.dart';
 import 'package:k_app/server/database/bloc/billing_bloc.dart';
 import 'package:k_app/server/database/objectBox.dart';
+import 'package:k_app/server/database/supabase.dart';
 //import 'package:k_app/server/provider/app_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 late ObjectBox objectBox;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  //Init supabase
+  initSupabase();
 
   objectBox = await ObjectBox.create(); // Initialize ObjectBox
 
@@ -31,6 +36,9 @@ void main() async {
     ),
   );
 }
+
+// Get a reference your Supabase client
+final supabase = Supabase.instance.client;
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});

@@ -49,3 +49,13 @@ app.*.map.json
 /Untitled-2025-02-07-1330.excalidraw
 /appointment.excalidraw
 /mineNotes.excalidraw
+
+# Excalidraw
+/.excalidraw/
+/.excalidraw-libraries
+
+# Key.properties
+key.properties
+
+# keystore.jks 
+app/upload-keystore.jks

@@ -404,7 +404,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
   TableCalendar<dynamic> _CalendarContainer(BuildContext context) {
     return TableCalendar(
       focusedDay: initialDate,
-      rowHeight: 35,
+      rowHeight: 45,
       calendarStyle: CalendarStyle(
         todayDecoration: BoxDecoration(
           color: AppColors.todayColodBackground,

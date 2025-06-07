@@ -25,6 +25,7 @@ class _HomescreenState extends State<HomeScreen> {
   List<Appointment>? listOfEvents; //Main list of events
   List<Appointment>? listOfEventsToUse; //List use to filter the events
   String? filterValue;
+  bool isExpanded = false;
 
   @override
   void initState() {
@@ -36,6 +37,12 @@ class _HomescreenState extends State<HomeScreen> {
     //Fetch the data (with Bloc)
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       context.read<AppointmentBloc>().add(FetchAppointments());
+    });
+  }
+
+  void _toggleEvents(bool expand) {
+    setState(() {
+      isExpanded = expand;
     });
   }
 
@@ -83,42 +90,110 @@ class _HomescreenState extends State<HomeScreen> {
 
 //Home screen content
   Widget _homeScreenContent() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    /*debugPrint("Screen height: $screenHeight");
+    final screenWidth = MediaQuery.of(context).size.width;
+    debugPrint("Screen width: $screenWidth");
+    debugPrint("Screen height * 0.4 : ${screenHeight * 0.44}");
+    debugPrint("Screen height * 0.8 : ${screenHeight * 0.8}"); */
     return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(left: marginleft, right: marginRigth),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // /SizedBox(height: 20),
-            // Calendar
-            CustomCalendar(),
-            //SizedBox(height: 5),
-            // Events title
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: marginleft, right: marginRigth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Appointmentss 📅',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
+                // /SizedBox(height: 20),
+                // Calendar
+                CustomCalendar(),
+                //SizedBox(height: 5),
+                // Events title
+                //SizedBox(height: 20),
+                // Filter section (dropdown)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Appointmentss 📅',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
 
-                //Filter
-                _filterSection(filterValue!),
+                    //Filter
+                    _filterSection(filterValue!),
+                  ],
+                ),
               ],
             ),
-            //SizedBox(height: 5),
-            // Events list
-            listOfEvents!.isEmpty
-                ? defaultContainer()
-                : Expanded(
-                    child: CustomEventlist(),
+          ),
+          AnimatedPositioned(
+            duration: Duration(milliseconds: 300),
+            left: 0,
+            right: 0,
+            bottom: isExpanded ? 0 : -(screenHeight * 0.44),
+            curve: Curves.easeInOut,
+            child: GestureDetector(
+              onVerticalDragUpdate: (details) {
+                //debugPrint("${details.delta.dy}");
+                debugPrint("${details.primaryDelta}");
+                if (details.primaryDelta! < -10) {
+                  debugPrint("Swipe up");
+                  _toggleEvents(true); // Swipe up
+                } else if (details.primaryDelta! > 10) {
+                  debugPrint("Swipe down");
+                  _toggleEvents(false); // Swipe down
+                }
+              },
+              child: Container(
+                height: screenHeight * 0.8,
+                decoration: BoxDecoration(
+                  color: AppColors.whiteColor,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding:
+                      EdgeInsets.only(left: marginleft, right: marginRigth),
+                  child: Column(
+                    children: [
+                      //Icon to swipe up and down
+                      GestureDetector(
+                        onTap: () {
+                          _toggleEvents(!isExpanded);
+                        },
+                        child: Center(
+                          child: Icon(
+                            isExpanded
+                                ? Icons.keyboard_arrow_down
+                                : Icons.keyboard_arrow_up,
+                            size: 30,
+                            color: AppColors.blackColor.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 15),
+                      // Events list
+                      listOfEvents!.isEmpty
+                          ? defaultContainer()
+                          : Expanded(child: CustomEventlist()),
+                    ],
                   ),
-          ],
-        ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

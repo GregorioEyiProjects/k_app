@@ -1,11 +1,12 @@
 import 'dart:math';
-
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:k_app/app_colors.dart';
 import 'package:k_app/client/screen-components/billing/filter/filterSection.dart';
 import 'package:k_app/client/screen-components/billing/listContainers/billingList.dart';
 import 'package:k_app/client/screen-components/billing/seeAllBillings/custom_cart.dart';
+import 'package:k_app/client/screen-components/billing/snackBar/customSnackBar.dart';
 import 'package:k_app/global.dart';
 import 'package:k_app/server/database/bloc/billing_bloc.dart';
 import 'package:k_app/server/database/bloc/events/billing_events.dart';
@@ -18,12 +19,14 @@ class SeeAllBillling extends StatefulWidget {
   final String? filterName;
   final bool? isFilteredFromThePreviousScreen;
   final List<Billing>? billingListToDisplay;
+  final List<Billing>? alllBillingListForThisMonth;
 
   const SeeAllBillling({
     super.key,
     this.filterName,
     this.isFilteredFromThePreviousScreen,
     this.billingListToDisplay,
+    this.alllBillingListForThisMonth,
   });
 
   @override
@@ -48,17 +51,28 @@ class _SeeAllBilllingState extends State<SeeAllBillling> {
     appBarTitle = "All incomes";
     defaultDateText = "Today";
 
-    if (widget.billingListToDisplay != null) {
-      debugPrint("BillingListToDisplay IS NOT NULL");
+    if (widget.billingListToDisplay != null &&
+        widget.billingListToDisplay!.isNotEmpty) {
+      debugPrint("BillingListToDisplay IS NOT NULL ");
+      //debugPrint("BillingListToDisplay IS NOT NULL -> ${widget.billingListToDisplay}");
+      debugPrint(
+          "BillingListToDisplay lenght: ${widget.billingListToDisplay!.length}");
+
       billingList = widget.billingListToDisplay!.reversed.toList();
       reversedBillingList = billingList!.reversed.toList();
-    } else {
-      debugPrint("BillingListToDisplay IS NULL");
-      //Fetch the data
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        //context.read<BillingBloc>().add(FetchBillings());
-        //debugPrint("Done Fetching billings");
+    } else if (widget.alllBillingListForThisMonth != null &&
+        widget.alllBillingListForThisMonth!.isNotEmpty) {
+      debugPrint(
+          "alllBillingListForThisMonth is NOT null in the INITSTATE and the lenght is: ${widget.alllBillingListForThisMonth!.length}");
+      setState(() {
+        billingList = widget.alllBillingListForThisMonth;
+        reversedBillingList = billingList!.reversed.toList();
       });
+    } else {
+      debugPrint(
+          "alllBillingListForThisMontt and BillingListToDisplay ARE NULL ->");
+      /* billingList = [];
+      reversedBillingList = []; */
 
       setState(() {
         filterNameText = widget.filterName ?? "All";
@@ -87,27 +101,20 @@ class _SeeAllBilllingState extends State<SeeAllBillling> {
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         toolbarHeight: kMinInteractiveDimension,
-        /* title: Text(
-          appBarTitle!,
-          style: TextStyle(
-            color: AppColors.blackColor,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Poppins',
-          ),
-        ), */
         backgroundColor: AppColors.backgroundColor,
         automaticallyImplyLeading: true,
       ),
       body: BlocConsumer<BillingBloc, BillingState>(
         builder: (context, state) {
+          //
           if (state is BillingLoading) {
             return Center(
               child: CircularProgressIndicator(),
             );
           } else if (state is FetchBillingLoaded) {
             if (widget.isFilteredFromThePreviousScreen == false) {
-              debugPrint("State is BillingLoaded SeeAllBillling");
+              debugPrint(
+                  "State is FetchBillingLoaded SeeAllBillling and button was 'See all'");
               billingList = state.billingsLoaded;
               reversedBillingList = billingList!.reversed.toList();
               filterNameText = widget.filterName ?? "All";
@@ -117,21 +124,49 @@ class _SeeAllBilllingState extends State<SeeAllBillling> {
 
             //ELSE ...
             return _seeAllContainer();
+          } else if (state is FetchBillingsByEstablishmentAndMonthLoaded) {
+            debugPrint(
+                "State is FetchBillingsByEstablishmentAndMonthLoaded SeeAllBillling");
+
+            if (widget.alllBillingListForThisMonth != null) {
+              debugPrint(
+                  "(1) alllBillingListForThisMonth is NOT null and the lenght is: ${widget.alllBillingListForThisMonth!.length}");
+              billingList = widget.alllBillingListForThisMonth;
+              reversedBillingList = billingList!.reversed.toList();
+              filterNameText = widget.filterName ?? "All";
+
+              return _seeAllContainer();
+            } else {
+              debugPrint(
+                  "(*) alllBillingListForThisMonth is NULL and the lenght is: ${widget.alllBillingListForThisMonth!.length}");
+              /* billingList = state.billingsFound;
+              reversedBillingList = billingList!.reversed.toList();
+              filterNameText = widget.filterName ?? "All"; */
+
+              return _seeAllContainer();
+            }
           } else if (state is BillingsByDayLoaded) {
+            debugPrint("State is BillingsByDayLoaded SeeAllBillling");
             billingList = state.billingsFound;
             reversedBillingList = billingList!.reversed.toList();
             filterNameText = widget.filterName ?? "All";
 
             return _seeAllContainer();
-          } else if (state is BillingError) {
+          } /*  else if (state is BillingDeleted) {
+            debugPrint("State is BillingDeleted SeeAllBillling");
+
+            return _seeAllContainer();
+          } */
+          else if (state is BillingError) {
+            debugPrint("State is BillingError in SeeAllBillling");
+            debugPrint("Message: ${state.message}");
             // Handle error state
             return Center(
               child: Text(
-                "Error: ${state.message}",
+                "No billing data available",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.red,
                 ),
               ),
             );
@@ -140,7 +175,18 @@ class _SeeAllBilllingState extends State<SeeAllBillling> {
             return defaultContainer();
           }
         },
-        listener: (context, state) {},
+        listener: (context, state) {
+          if (state is BillingDeleted) {
+            debugPrint("State is BillingDeleted SeeAllBillling");
+            //Show a snackbar
+            CustomSnackBar.show(
+              context,
+              title: "Success",
+              message: "Billing was delete",
+              contentType: ContentType.success,
+            );
+          }
+        },
       ),
     );
   }
@@ -150,7 +196,7 @@ class _SeeAllBilllingState extends State<SeeAllBillling> {
   Padding _seeAllContainer() {
     debugPrint("BillingList lenght: ${billingList!.length}");
     debugPrint("ReversedBillingList lenght: ${reversedBillingList!.length}");
-    /**/ debugPrint(
+    debugPrint(
         "widget.isFilteredFromThePreviousScreen : ${widget.isFilteredFromThePreviousScreen}");
     return Padding(
       padding: EdgeInsets.only(left: marginleft, right: marginRigth),
@@ -274,7 +320,7 @@ class _SeeAllBilllingState extends State<SeeAllBillling> {
             break;
         }
 
-        // debugPrint("Start Date: $startDate");
+        //debugPrint("Start Date: $startDate");
         //debugPrint("End Date: $endDate");
 
         //Get the items from yesterday

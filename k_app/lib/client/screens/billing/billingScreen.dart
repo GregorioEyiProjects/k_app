@@ -286,7 +286,7 @@ class _BillingScreenState extends State<BillingScreen> {
                   now.month,
                   now.day - 1,
                 );
-                print("Yesterday: ");
+                debugPrint("Yesterday: ");
 
                 break;
               case "Last 7 days":
@@ -295,7 +295,7 @@ class _BillingScreenState extends State<BillingScreen> {
                   now.month,
                   now.day - 7,
                 );
-                print("Last 7 days: ");
+                debugPrint("Last 7 days: ");
                 //dateToFilter = "Last 7 days";
                 break;
               case "Last 30 days":
@@ -304,16 +304,16 @@ class _BillingScreenState extends State<BillingScreen> {
                   now.month,
                   now.day - 30,
                 );
-                print("Last 30 days: ");
+                debugPrint("Last 30 days: ");
                 break;
               default:
                 startDate = DateTime(2000); // Default to a very early date
-                print("Default: $startDate");
+                debugPrint("Default: $startDate");
                 break;
             }
 
-            print("Start Date: $startDate");
-            print("End Date: $endDate");
+            debugPrint("Start Date: $startDate");
+            debugPrint("End Date: $endDate");
 
             //Get the items by date
             billingBloc.add(
@@ -331,18 +331,16 @@ class _BillingScreenState extends State<BillingScreen> {
           children: [
             TextButton(
               onPressed: () {
-                billingBloc.add(FetchBillings());
+                //billingBloc.add(FetchBillings());
                 debugPrint(
-                    "Resetting BillingBloc state to default  and Navigate to see all items");
-
+                    "Navigate to the see all billing screen with the billingListToUse length: ${billingListToUse?.length}");
                 final args = {
                   'filterName': "All",
                   "isFilteredFromThePreviousScreen": false,
+                  "alllBillingListForThisMonth": billingListToUse ?? [],
                 };
-                navigatorKey.currentState?.pushNamed(
-                  '/seeAllBilling',
-                  arguments: args,
-                );
+                navigatorKey.currentState
+                    ?.pushNamed('/seeAllBilling', arguments: args);
               },
               child: Text(
                 'See all',
@@ -357,9 +355,12 @@ class _BillingScreenState extends State<BillingScreen> {
             GestureDetector(
               onTap: () {
                 //Navigate to the see all billing screen
+                debugPrint(
+                    "Navigate to the see all billing screen with the billingListToUse length: ${billingListToUse?.length}");
                 final args = {
                   'filterName': "All",
                   "isFilteredFromThePreviousScreen": false,
+                  "alllBillingListForThisMonth": billingListToUse ?? [],
                 };
                 navigatorKey.currentState
                     ?.pushNamed('/seeAllBilling', arguments: args);
